@@ -3,7 +3,8 @@
 
 ## Proje Hakkında
 
-![Ürün Tanıtım Görseli](product.png)
+<img width="2784" height="1536" alt="product" src="https://github.com/user-attachments/assets/a6090a00-6e73-4e87-8cb7-aad829e6c65c" />
+
 
 **Proje Tanımı:** 
 > BlogicodeAI, teknoloji ve inovasyon, yazılım mühendisliği, yapay zeka, güncel teknoloji trendleri üzerine içeriklerin paylaşıldığı modern ve kullanıcı dostu bir blog platformudur. Kullanıcıların teknolojik gelişmeleri kolayca takip edebilmesi ve yazılım dünyasına dair temel seviyeden ileri seviyeye kadar rehber içeriklere ulaşabilmesi amaçlanmaktadır. Ziyaretçiler makaleleri okuyabilirken, sistem yöneticisi de kolayca yeni içerikler ekleyip düzenleyebilecektir. Kullanıcılar blog yazılarını okuyup görüntüleyebilecek, altına yorum yapabilecekler hatta sitemizdeki yapay zeka destekli chat modülüyle de trend konu ve başlıklar hakkında bilgi ve ipuçlarına erişebileceklerdir. Kısaca BlogicodeAI; bilişim ve teknoloji severler için tasarlanmış yapay zeka destekli bir sosyal etkileşim platformudur.
