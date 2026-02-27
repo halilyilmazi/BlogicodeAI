@@ -44,9 +44,9 @@ Her ekip üyesi için aşağıdaki yapı takip edilecektir:
 
 ### 3. Ekip Üyeleri Sunum Sırası
 
-#### Ali Tutar
+#### Halil Yılmaz
 **Kişisel Tanıtım:**
-- İsim: Ali Tutar
+- İsim: Halil Yılmaz
 
 **Gereksinimler:**
 1. **Üye Olma**
@@ -69,7 +69,7 @@ Her ekip üyesi için aşağıdaki yapı takip edilecektir:
 
 #### Veli Yılmaz
 **Kişisel Tanıtım:**
-- İsim: Veli Yılmaz
+- İsim: Halil Yılmaz
 - Rol: [Rol belirtilecek]
 
 **Gereksinimler:**
