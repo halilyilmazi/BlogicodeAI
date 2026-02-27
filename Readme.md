@@ -31,7 +31,7 @@
 > ISERA
 
 **Ekip Üyeleri:** 
--Halil Yılmaz
+Halil Yılmaz
 
 ---
 
