@@ -5,6 +5,7 @@
 1. **Kayıt Olma**
 2. **Giriş Yapma**
 3. **Profil Görüntüleme**
+4. **Profil Güncelleme**
 5. **Hesap Silme**
 6. **Blog Yazısı Oluşturma**
 7. **Blog Yazılarını Listeleme**
