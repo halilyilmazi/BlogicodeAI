@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 app.use(cors());
@@ -155,10 +156,27 @@ app.delete('/api/comments/:id', async (req, res) => {
     }
 });
 
-// 11. AI Asistanı (ChatBot)
-app.post('/api/chatbot', (req, res) => {
-    const { message } = req.body;
-    res.status(200).json({ reply: `Yapay Zeka: "${message}" konulu mesajınızı aldım. Size nasıl yardımcı olabilirim?` });
+// 11. AI Asistanı (Chatbot Modülü)
+app.post('/api/chatbot', async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        // Senin API anahtarınla yapay zekayı uyandırıyoruz
+        const genAI = new GoogleGenerativeAI("AIzaSyAJHD1sZUQwZIyRq-dzi_lyhb1KYFtCFUo");
+        // Hızlı ve akıllı modeli seçiyoruz
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+
+        // Kullanıcının mesajını yapay zekaya soruyoruz
+        const result = await model.generateContent(message);
+        const response = await result.response;
+        const text = response.text(); // Gelen cevabı metne çevir
+
+        // Gelen cevabı frontend'e (senin sohbet ekranına) yolla
+        res.status(200).json({ reply: text });
+    } catch (error) {
+        console.error("Yapay zeka hatası:", error);
+        res.status(500).json({ reply: "Hata: Asistan şu an meşgul, lütfen tekrar deneyin." });
+    }
 });
 
 // Ana Sayfa Kontrolü

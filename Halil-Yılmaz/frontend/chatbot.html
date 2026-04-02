@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlogicodeAI | Asistan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        /* Üst Menü */
+        .navbar {
+            background-color: #1877f2;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar h1 { margin: 0; font-size: 20px; }
+        .nav-buttons button {
+            background-color: white;
+            color: #1877f2;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+        .nav-buttons button:hover { background-color: #e4e6eb; }
+        
+        /* Sohbet Ekranı */
+        .chat-container {
+            flex: 1;
+            max-width: 800px;
+            width: 100%;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #e5ddd5; /* WhatsApp arka plan rengi */
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            position: relative;
+            clear: both;
+        }
+        .message.user {
+            background-color: #dcf8c6;
+            float: right;
+            border-bottom-right-radius: 0;
+        }
+        .message.bot {
+            background-color: #ffffff;
+            float: left;
+            border-bottom-left-radius: 0;
+        }
+        
+        /* Mesaj Gönderme Alanı */
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background: #f0f0f0;
+            border-top: 1px solid #ccc;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+            font-size: 15px;
+        }
+        .input-area button {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .input-area button:hover { background-color: #166fe5; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>BlogicodeAI Asistanı 🤖</h1>
+        <div class="nav-buttons">
+            <button onclick="window.location.href='home.html'">Ana Sayfaya Dön</button>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            <div class="message bot">
+                Merhaba! Ben BlogicodeAI asistanıyım. Sana nasıl yardımcı olabilirim?
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Mesajınızı yazın..." onkeypress="klavyeDinle(event)">
+            <button onclick="mesajGonder()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        
+        // Giriş kontrolü
+        if (!localStorage.getItem('userId')) {
+            window.location.href = 'index.html';
+        }
+
+        // Enter tuşuna basılınca gönderme
+        function klavyeDinle(event) {
+            if (event.key === "Enter") {
+                mesajGonder();
+            }
+        }
+
+        async function mesajGonder() {
+            const inputField = document.getElementById('userInput');
+            const message = inputField.value.trim();
+            const chatBox = document.getElementById('chatBox');
+
+            if (!message) return;
+
+            // 1. Kullanıcı mesajını ekrana bas
+            chatBox.innerHTML += `<div class="message user">${message}</div>`;
+            inputField.value = ''; // Kutuyu temizle
+            chatBox.scrollTop = chatBox.scrollHeight; // En alta kaydır
+
+            // 2. Yapay zeka düşünüyor efekti...
+            const typingId = "typing-" + Date.now();
+            chatBox.innerHTML += `<div class="message bot" id="${typingId}"><em>Yazıyor...</em></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                // 3. Senin Vercel'deki API'ye mesajı yolla
+                const response = await fetch(apiUrl + '/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                // 4. Yazıyor yazısını kaldır ve gerçek cevabı bas
+                document.getElementById(typingId).remove();
+                
+                if(response.ok) {
+                    chatBox.innerHTML += `<div class="message bot">${data.reply}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="message bot" style="color:red;">Hata: Asistana ulaşılamadı.</div>`;
+                }
+                chatBox.scrollTop = chatBox.scrollHeight;
+                
+            } catch (error) {
+                document.getElementById(typingId).remove();
+                chatBox.innerHTML += `<div class="message bot" style="color:red;">Sunucu bağlantı hatası!</div>`;
+            }
+        }
+    </script>
+
+</body>
+</html>

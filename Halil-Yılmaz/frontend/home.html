@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlogicodeAI | Ana Sayfa</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        /* Üst Menü (Navbar) */
+        .navbar {
+            background-color: #1877f2;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .logout-btn {
+            background-color: white;
+            color: #1877f2;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #e4e6eb;
+        }
+        
+        /* Ana İçerik Konteyneri */
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+
+        /* Yeni Yazı Ekleme Kutusu */
+        .post-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .post-box input, .post-box textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .post-box button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .post-box button:hover {
+            background-color: #45a049;
+        }
+
+        /* Blog Yazıları Listesi */
+        .blog-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .blog-card h3 {
+            margin-top: 0;
+            color: #1877f2;
+        }
+        .blog-card .category {
+            font-size: 12px;
+            background: #e4e6eb;
+            padding: 3px 8px;
+            border-radius: 10px;
+            color: #555;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .blog-card .content {
+            color: #333;
+            line-height: 1.5;
+        }
+        .blog-card .date {
+            font-size: 12px;
+            color: #888;
+            margin-top: 15px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>BlogicodeAI</h1>
+        <div>
+            <button class="logout-btn" onclick="window.location.href='chatbot.html'" style="margin-right: 10px;">🤖 Asistan</button>
+            <button class="logout-btn" onclick="cikisYap()">Çıkış Yap</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="post-box">
+            <h3 style="margin-top: 0; color: #333;">Yeni Bir Şeyler Paylaş</h3>
+            <input type="text" id="postTitle" placeholder="Yazı Başlığı" required>
+            <input type="text" id="postCategory" placeholder="Kategori (Örn: Yazılım, Teknoloji)" required>
+            <textarea id="postContent" rows="4" placeholder="Neler düşünüyorsun?" required></textarea>
+            <button onclick="yaziPaylas()">Paylaş</button>
+            <span id="postMessage" style="margin-left: 10px; font-weight: bold;"></span>
+        </div>
+
+        <h2 style="color: #333;">Son Yazılar</h2>
+        <div id="blogList">
+            <p>Yazılar yükleniyor...</p>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        
+        // Kullanıcı giriş yapmamışsa (ID'si yoksa) login sayfasına kov
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = 'index.html';
+        }
+
+        // Sayfa açıldığında yazıları getir
+        window.onload = yazilariGetir;
+
+        // Backend'den Yazıları Çekme Fonksiyonu
+        async function yazilariGetir() {
+            const blogListDiv = document.getElementById('blogList');
+            try {
+                const response = await fetch(apiUrl + '/posts');
+                const result = await response.json();
+                
+                blogListDiv.innerHTML = ''; // "Yükleniyor" yazısını temizle
+
+                // Eğer yazı yoksa
+                if (result.data.length === 0) {
+                    blogListDiv.innerHTML = '<p>Henüz hiç yazı paylaşılmamış. İlk yazan sen ol!</p>';
+                    return;
+                }
+
+                // Yazıları tek tek HTML'e dönüştür ve ekrana bas
+                result.data.forEach(post => {
+                    const date = new Date(post.createdAt).toLocaleString('tr-TR');
+                    
+                    const postHTML = `
+                        <div class="blog-card">
+                            <h3>${post.title}</h3>
+                            <span class="category">${post.category || 'Genel'}</span>
+                            <div class="content">${post.content}</div>
+                            <div class="date">${date}</div>
+                        </div>
+                    `;
+                    blogListDiv.innerHTML += postHTML;
+                });
+
+            } catch (error) {
+                blogListDiv.innerHTML = '<p style="color:red;">Yazılar yüklenirken bir hata oluştu.</p>';
+            }
+        }
+
+        // Yeni Yazı Gönderme Fonksiyonu
+        async function yaziPaylas() {
+            const title = document.getElementById('postTitle').value;
+            const category = document.getElementById('postCategory').value;
+            const content = document.getElementById('postContent').value;
+            const messageSpan = document.getElementById('postMessage');
+
+            if (!title || !content) {
+                messageSpan.style.color = "red";
+                messageSpan.innerText = "Başlık ve içerik boş olamaz!";
+                return;
+            }
+
+            messageSpan.style.color = "#333";
+            messageSpan.innerText = "Paylaşılıyor...";
+
+            try {
+                const response = await fetch(apiUrl + '/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    // AuthorId'yi localStorage'dan (giriş yapan kişiden) alıyoruz
+                    body: JSON.stringify({ title, category, content, authorId: userId })
+                });
+
+                if (response.ok) {
+                    messageSpan.style.color = "green";
+                    messageSpan.innerText = "Başarıyla paylaşıldı!";
+                    
+                    // Kutuları temizle
+                    document.getElementById('postTitle').value = '';
+                    document.getElementById('postCategory').value = '';
+                    document.getElementById('postContent').value = '';
+                    
+                    // Yazıları güncel haliyle tekrar getir
+                    yazilariGetir();
+                    
+                    // 2 saniye sonra mesajı sil
+                    setTimeout(() => messageSpan.innerText = "", 2000);
+                } else {
+                    messageSpan.style.color = "red";
+                    messageSpan.innerText = "Paylaşılamadı.";
+                }
+            } catch (error) {
+                messageSpan.style.color = "red";
+                messageSpan.innerText = "Sunucu hatası.";
+            }
+        }
+
+        // Çıkış Yapma Fonksiyonu
+        function cikisYap() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userToken');
+            window.location.href = 'index.html';
+        }
+    </script>
+
+</body>
+</html>
