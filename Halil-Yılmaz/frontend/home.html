@@ -117,6 +117,35 @@
             cursor: pointer;
             float: left;
             margin-top: 15px;
+        /* Yorum Kısmı CSS */
+        .comment-section { 
+            margin-top: 15px; 
+            border-top: 1px solid #eee; 
+            padding-top: 15px; 
+            display: flex; 
+            gap: 10px; 
+            clear: both; 
+        }
+        .comment-input { 
+            flex: 1; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            outline: none; 
+            font-family: inherit; 
+        }
+        .comment-btn { 
+            background-color: #1877f2; 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .comment-btn:hover { 
+            background-color: #166fe5; 
+        }
         }
     </style>
 </head>
@@ -190,6 +219,11 @@
                             <div class="content">${post.content}</div>
                             ${deleteBtnHtml}
                             <div class="date">${date}</div>
+                            <div class="comment-section">
+                                <input type="text" id="comment-${post._id}" class="comment-input" placeholder="Bu yazıya bir yorum yap...">
+                                <button class="comment-btn" onclick="yorumGonder('${post._id}')">Gönder</button>
+                            </div>
+
                             <div style="clear:both;"></div>
                         </div>
                     `;
@@ -261,6 +295,33 @@
                 } catch (error) { 
                     alert("Sunucu hatası, silinemedi."); 
                 }
+            }
+        }
+        // YENİ: Yorum Gönderme Fonksiyonu
+        async function yorumGonder(postId) {
+            const commentInput = document.getElementById('comment-' + postId);
+            const content = commentInput.value;
+
+            if (!content) {
+                alert("Lütfen bir yorum yazın!");
+                return;
+            }
+
+            try {
+                const res = await fetch(apiUrl + '/posts/' + postId + '/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, authorId: userId })
+                });
+
+                if (res.ok) {
+                    alert("✅ Yorumunuz başarıyla veritabanına kaydedildi!");
+                    commentInput.value = ''; // Gönderdikten sonra kutuyu temizle
+                } else {
+                    alert("Yorum gönderilirken bir hata oluştu.");
+                }
+            } catch (error) {
+                alert("Sunucuya bağlanılamadı.");
             }
         }
         // Çıkış Yapma Fonksiyonu
