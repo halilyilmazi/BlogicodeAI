@@ -161,12 +161,12 @@ app.post('/api/chatbot', async (req, res) => {
     try {
         const { message } = req.body;
         
-        // API Anahtarını buraya tekrar, başında sonunda boşluk kalmayacak şekilde koyduk
+        // Anahtarı tekrar kontrol et, boşluk kalmasın
         const apiKey = "AIzaSyAJHD1sZUQwZIyRq-dzi_lyhb1KYFtCFUo".trim();
         const genAI = new GoogleGenerativeAI(apiKey);
         
-        // Modeli çağırırken hata payını azaltmak için yapılandırma ekledik
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+        // "gemini-1.5-flash" yerine en stabil "gemini-pro" ismini deniyoruz
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" }); 
 
         const result = await model.generateContent(message);
         const response = await result.response;
@@ -174,9 +174,8 @@ app.post('/api/chatbot', async (req, res) => {
 
         res.status(200).json({ reply: text });
     } catch (error) {
-        // Hatayı loglarda daha detaylı görelim
         console.error("Detaylı Yapay Zeka Hatası:", error.message);
-        res.status(500).json({ reply: "Asistan şu an bağlantı kuramıyor, lütfen 10 saniye sonra tekrar deneyin." });
+        res.status(500).json({ reply: "Asistan şu an uyanamadı, lütfen 5 saniye sonra tekrar deneyin." });
     }
 });
 
