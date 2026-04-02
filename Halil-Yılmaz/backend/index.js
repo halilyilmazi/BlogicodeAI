@@ -1,158 +1,173 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- SAHTE VERİTABANLARIMIZ (Uygulama çalıştıkça hafızada tutulur) ---
-let users = [];
-let posts = [];
-let comments = [];
+// --- MONGODB BAĞLANTISI ---
+const mongoURI = "mongodb+srv://ylmzyzlm:tqAR4Qxj@cluster0.yzs8d09.mongodb.net/blogicode?retryWrites=true&w=majority&appName=Cluster0";
+
+mongoose.connect(mongoURI)
+    .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
+    .catch((err) => console.log("Veritabanı bağlantı hatası:", err));
+
+// --- VERİTABANI ŞEMALARI (Modeller) ---
+const User = mongoose.model('User', new mongoose.Schema({
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    username: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    profilePhoto: { type: String, default: "" }
+}, { timestamps: true }));
+
+const Post = mongoose.model('Post', new mongoose.Schema({
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    category: { type: String },
+    authorId: { type: String, required: true },
+    tags: [String]
+}, { timestamps: true }));
+
+const Comment = mongoose.model('Comment', new mongoose.Schema({
+    postId: { type: String, required: true },
+    authorId: { type: String, required: true },
+    content: { type: String, required: true }
+}, { timestamps: true }));
+
+
+// --- 11 GEREKSİNİM İÇİN API ROTALARI ---
 
 // 1. Kayıt Olma (Register)
-app.post('/api/auth/register', (req, res) => {
-    const { firstName, lastName, email, password } = req.body;
-    
-    const userExists = users.find(u => u.email === email);
-    if (userExists) {
-        return res.status(409).json({ code: "CONFLICT", message: "Bu email adresi zaten kullanımda." });
-    }
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { firstName, lastName, email, password } = req.body;
+        const userExists = await User.findOne({ email });
+        if (userExists) return res.status(409).json({ message: "Bu email adresi zaten kullanımda." });
 
-    const newUser = { 
-        id: Date.now().toString(), 
-        firstName, 
-        lastName, 
-        email, 
-        password,
-        username: "",
-        bio: "",
-        profilePhoto: ""
-    };
-    users.push(newUser);
-    res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu", user: newUser });
+        const newUser = await User.create({ firstName, lastName, email, password });
+        res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu", user: newUser });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 2. Giriş Yapma (Login)
-app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-        res.status(200).json({ message: "Giriş başarılı", token: "blogicodeai-jwt-token-777", user });
-    } else {
-        res.status(401).json({ code: "UNAUTHORIZED", message: "Hatalı email veya şifre." });
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email, password });
+        if (user) {
+            res.status(200).json({ message: "Giriş başarılı", token: "blogicodeai-jwt-token-777", user });
+        } else {
+            res.status(401).json({ message: "Hatalı email veya şifre." });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
 // 3. Profil Görüntüleme
-app.get('/api/users/:id', (req, res) => {
-    const user = users.find(u => u.id === req.params.id);
-    if (!user) {
-        return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+app.get('/api/users/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+        const userPosts = await Post.find({ authorId: req.params.id });
+        res.status(200).json({ user, posts: userPosts });
+    } catch (error) {
+        res.status(500).json({ error: "Geçersiz ID formatı" });
     }
-    // Kullanıcının yazdığı blogları da bulup profile ekliyoruz
-    const userPosts = posts.filter(p => p.authorId === req.params.id);
-    res.status(200).json({ user, posts: userPosts });
 });
 
 // 4. Profil Güncelleme
-app.put('/api/users/:id', (req, res) => {
-    const { username, bio, profilePhoto } = req.body;
-    const userIndex = users.findIndex(u => u.id === req.params.id);
-    
-    if (userIndex === -1) {
-        return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const { username, bio, profilePhoto } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, { username, bio, profilePhoto }, { new: true });
+        if (!updatedUser) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+        res.status(200).json({ message: "Profil başarıyla güncellendi", user: updatedUser });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    
-    // Sadece gönderilen bilgileri güncelliyoruz
-    users[userIndex] = { ...users[userIndex], username, bio, profilePhoto };
-    res.status(200).json({ message: "Profil başarıyla güncellendi", user: users[userIndex] });
 });
 
 // 5. Hesap Silme
-app.delete('/api/users/:id', (req, res) => {
-    const userIndex = users.findIndex(u => u.id === req.params.id);
-    if (userIndex === -1) {
-        return res.status(404).json({ message: "Kullanıcı bulunamadı." });
+app.delete('/api/users/:id', async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    
-    users.splice(userIndex, 1);
-    res.status(204).send(); // 204 No Content (Başarıyla silindi, içerik yok)
 });
 
 // 6. Blog Yazısı Oluşturma
-app.post('/api/posts', (req, res) => {
-    const { title, content, category, authorId } = req.body;
-    const newPost = { 
-        id: Date.now().toString(), 
-        authorId,
-        title, 
-        content, 
-        category, 
-        tags: [],
-        createdAt: new Date().toISOString() 
-    };
-    posts.push(newPost);
-    res.status(201).json({ message: "Yazı başarıyla oluşturuldu", post: newPost });
+app.post('/api/posts', async (req, res) => {
+    try {
+        const newPost = await Post.create(req.body);
+        res.status(201).json({ message: "Yazı başarıyla oluşturuldu", post: newPost });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 7. Blog Yazılarını Listeleme
-app.get('/api/posts', (req, res) => {
-    res.status(200).json({ data: posts });
+app.get('/api/posts', async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ createdAt: -1 });
+        res.status(200).json({ data: posts });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 8. Blog Yazısı Silme
-app.delete('/api/posts/:id', (req, res) => {
-    const postIndex = posts.findIndex(p => p.id === req.params.id);
-    if (postIndex === -1) {
-        return res.status(404).json({ message: "Yazı bulunamadı." });
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        await Post.findByIdAndDelete(req.params.id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    
-    posts.splice(postIndex, 1);
-    res.status(204).send();
 });
 
 // 9. Yorum Ekleme
-app.post('/api/posts/:id/comments', (req, res) => {
-    const { content, authorId } = req.body;
-    const newComment = { 
-        id: Date.now().toString(), 
-        postId: req.params.id, 
-        authorId, 
-        content, 
-        createdAt: new Date().toISOString() 
-    };
-    comments.push(newComment);
-    res.status(201).json({ message: "Yorum başarıyla eklendi", comment: newComment });
+app.post('/api/posts/:id/comments', async (req, res) => {
+    try {
+        const { content, authorId } = req.body;
+        const newComment = await Comment.create({ postId: req.params.id, authorId, content });
+        res.status(201).json({ message: "Yorum başarıyla eklendi", comment: newComment });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 10. Yorum Silme
-app.delete('/api/comments/:id', (req, res) => {
-    const commentIndex = comments.findIndex(c => c.id === req.params.id);
-    if (commentIndex === -1) {
-        return res.status(404).json({ message: "Yorum bulunamadı." });
+app.delete('/api/comments/:id', async (req, res) => {
+    try {
+        await Comment.findByIdAndDelete(req.params.id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    
-    comments.splice(commentIndex, 1);
-    res.status(204).send();
 });
 
 // 11. AI Asistanı (ChatBot)
 app.post('/api/chatbot', (req, res) => {
     const { message } = req.body;
-    res.status(200).json({ 
-        reply: `Yapay Zeka: "${message}" konulu mesajınızı aldım. Size nasıl yardımcı olabilirim?` 
-    });
+    res.status(200).json({ reply: `Yapay Zeka: "${message}" konulu mesajınızı aldım. Size nasıl yardımcı olabilirim?` });
 });
 
 // Ana Sayfa Kontrolü
 app.get('/', (req, res) => {
-    res.json({ mesaj: "BlogicodeAI API'si tüm 11 gereksinimiyle tıkır tıkır çalışıyor!" });
+    res.json({ mesaj: "BlogicodeAI API'si MongoDB destekli olarak tıkır tıkır çalışıyor!" });
 });
 
 // Sunucuyu Başlat
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Sunucu http://localhost:${PORT} adresinde aktif! Tüm rotalar devrede.`);
+    console.log(`Sunucu http://localhost:${PORT} adresinde aktif!`);
 });
