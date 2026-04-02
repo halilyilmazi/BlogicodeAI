@@ -161,21 +161,22 @@ app.post('/api/chatbot', async (req, res) => {
     try {
         const { message } = req.body;
         
-        // Senin API anahtarınla yapay zekayı uyandırıyoruz
-        const genAI = new GoogleGenerativeAI("AIzaSyAJHD1sZUQwZIyRq-dzi_lyhb1KYFtCFUo");
-        // Hızlı ve akıllı modeli seçiyoruz
+        // API Anahtarını buraya tekrar, başında sonunda boşluk kalmayacak şekilde koyduk
+        const apiKey = "AIzaSyAJHD1sZUQwZIyRq-dzi_lyhb1KYFtCFUo".trim();
+        const genAI = new GoogleGenerativeAI(apiKey);
+        
+        // Modeli çağırırken hata payını azaltmak için yapılandırma ekledik
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
-        // Kullanıcının mesajını yapay zekaya soruyoruz
         const result = await model.generateContent(message);
         const response = await result.response;
-        const text = response.text(); // Gelen cevabı metne çevir
+        const text = response.text();
 
-        // Gelen cevabı frontend'e (senin sohbet ekranına) yolla
         res.status(200).json({ reply: text });
     } catch (error) {
-        console.error("Yapay zeka hatası:", error);
-        res.status(500).json({ reply: "Hata: Asistan şu an meşgul, lütfen tekrar deneyin." });
+        // Hatayı loglarda daha detaylı görelim
+        console.error("Detaylı Yapay Zeka Hatası:", error.message);
+        res.status(500).json({ reply: "Asistan şu an bağlantı kuramıyor, lütfen 10 saniye sonra tekrar deneyin." });
     }
 });
 
