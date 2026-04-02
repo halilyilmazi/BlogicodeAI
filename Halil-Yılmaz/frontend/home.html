@@ -107,6 +107,17 @@
             margin-top: 15px;
             text-align: right;
         }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            float: left;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +125,7 @@
     <div class="navbar">
         <h1>BlogicodeAI</h1>
         <div>
+            <button class="logout-btn" onclick="window.location.href='profile.html'" style="margin-right: 10px;">👤 Profilim</button>
             <button class="logout-btn" onclick="window.location.href='chatbot.html'" style="margin-right: 10px;">🤖 Asistan</button>
             <button class="logout-btn" onclick="cikisYap()">Çıkış Yap</button>
         </div>
@@ -166,12 +178,19 @@
                 result.data.forEach(post => {
                     const date = new Date(post.createdAt).toLocaleString('tr-TR');
                     
+                    // Eğer yazıyı giren kişi şu anki kullanıcıysa Sil butonunu göster
+                    const deleteBtnHtml = (post.authorId === userId) 
+                        ? `<button class="delete-btn" onclick="yaziSil('${post._id}')">🗑️ Yazıyı Sil</button>` 
+                        : '';
+
                     const postHTML = `
-                        <div class="blog-card">
+                        <div class="blog-card" id="post-${post._id}">
                             <h3>${post.title}</h3>
                             <span class="category">${post.category || 'Genel'}</span>
                             <div class="content">${post.content}</div>
+                            ${deleteBtnHtml}
                             <div class="date">${date}</div>
+                            <div style="clear:both;"></div>
                         </div>
                     `;
                     blogListDiv.innerHTML += postHTML;
@@ -229,7 +248,21 @@
                 messageSpan.innerText = "Sunucu hatası.";
             }
         }
-
+        // Yazı Silme Fonksiyonu
+        async function yaziSil(postId) {
+            if(confirm("Bu yazıyı kalıcı olarak silmek istiyor musun?")) {
+                try {
+                    const res = await fetch(apiUrl + '/posts/' + postId, { method: 'DELETE' });
+                    if(res.ok) {
+                        document.getElementById('post-' + postId).remove(); // Ekranda anında yok et
+                    } else {
+                        alert("Silinemedi.");
+                    }
+                } catch (error) { 
+                    alert("Sunucu hatası, silinemedi."); 
+                }
+            }
+        }
         // Çıkış Yapma Fonksiyonu
         function cikisYap() {
             localStorage.removeItem('userId');

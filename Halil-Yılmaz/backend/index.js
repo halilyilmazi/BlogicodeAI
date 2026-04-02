@@ -20,10 +20,13 @@ const User = mongoose.model('User', new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // Kriptolamayı kaldırdık, düz metin kaydedecek
+    password: { type: String, required: true },
     username: { type: String, default: "" },
     bio: { type: String, default: "" },
-    profilePhoto: { type: String, default: "" }
+    profession: { type: String, default: "" }, // Meslek
+    gender: { type: String, default: "" },     // Cinsiyet
+    birthDate: { type: String, default: "" },  // Doğum Tarihi
+    profilePhoto: { type: String, default: "" } // Profil Fotoğrafı URL
 }, { timestamps: true }));
 
 const Post = mongoose.model('Post', new mongoose.Schema({
