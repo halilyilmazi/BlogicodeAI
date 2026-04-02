@@ -164,7 +164,7 @@ app.post('/api/chatbot', async (req, res) => {
         const { message } = req.body;
         
         // Yapay zeka anahtarını env dosyasından kurtarıp doğrudan buraya yazdık
-        const apiKey = "AIzaSyAJHD1sZUQwZIyRq-dzi_lyhb1KYFtCFUo".trim(); 
+        const apiKey = "AIzaSyBB3ZMooxsAx-I1DfOwo57A2QbyYDLbIWk".trim(); 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
