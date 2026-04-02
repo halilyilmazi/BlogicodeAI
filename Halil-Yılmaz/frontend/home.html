@@ -147,6 +147,16 @@
             background-color: #166fe5; 
         }
         }
+        /* Ekrana Basılan Yorumun Tasarımı */
+        .comment-item {
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+            border-left: 3px solid #1877f2;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -223,6 +233,7 @@
                                 <input type="text" id="comment-${post._id}" class="comment-input" placeholder="Bu yazıya bir yorum yap...">
                                 <button class="comment-btn" onclick="yorumGonder('${post._id}')">Gönder</button>
                             </div>
+                            <div id="comments-list-${post._id}" class="comments-list"></div>
 
                             <div style="clear:both;"></div>
                         </div>
@@ -315,8 +326,11 @@
                 });
 
                 if (res.ok) {
-                    alert("✅ Yorumunuz başarıyla veritabanına kaydedildi!");
-                    commentInput.value = ''; // Gönderdikten sonra kutuyu temizle
+                    // Yorum kutusunu bul ve içine yeni yorumu anında ekle!
+                    const commentsList = document.getElementById('comments-list-' + postId);
+                    commentsList.innerHTML += `<div class="comment-item"><strong>Sen:</strong> ${content}</div>`;
+                    
+                    commentInput.value = ''; // Gönderdikten sonra giriş kutusunu temizle
                 } else {
                     alert("Yorum gönderilirken bir hata oluştu.");
                 }
