@@ -1,8 +1,7 @@
 # Halil Yılmaz — REST API
 
-**Video linki (buraya kendi videonu yapıştır):** [https://youtu.be/hFB8fLDNV9o](https://youtu.be/hFB8fLDNV9o)
+**Video linki: [https://youtu.be/hFB8fLDNV9o](https://youtu.be/hFB8fLDNV9o)**
 
-Videoda göster:
 
 - Tarayıcıda **Postman**; koleksiyon adı ve **canlı domain** (`{{baseUrl}}` veya tam URL) adres çubuğunda görünsün.
 - En az bir **POST** ve bir **GET** isteği; **Tests** sekmesinde veya Test sonuçları panelinde **yeşil** onaylar.
