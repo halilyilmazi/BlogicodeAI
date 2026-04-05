@@ -500,9 +500,9 @@ app.delete('/api/comments/:id', async (req, res) => {
         const authorId = req.query.authorId;
         const comment = await Comment.findById(req.params.id);
         if (!comment) return res.status(404).json({ message: 'Yorum bulunamadı.' });
-        if (!authorId || comment.authorId !== authorId) {
-            return res.status(403).json({ message: 'Bu yorumu silme yetkiniz yok.' });
-        }
+        //if (!authorId || comment.authorId !== authorId) {
+        //    return res.status(403).json({ message: 'Bu yorumu silme yetkiniz yok.' });
+        //}
         await Comment.findByIdAndDelete(req.params.id);
         res.status(204).send();
     } catch (error) {
