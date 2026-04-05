@@ -1,6 +1,6 @@
 # Web Frontend — BlogicodeAI
 
-**Canlı web arayüzü (domain):** `https://www.blogicodeai.com`[https://www.blogicodeai.com]
+**Canlı web arayüzü (domain):** `[https://www.blogicodeai.com]
 
 *(Canlı REST API: `https://blogicode-ai.vercel.app/api` — `config.js` canlıda bu tabanı kullanır.)*
 
