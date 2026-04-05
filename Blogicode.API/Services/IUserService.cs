@@ -10,5 +10,6 @@ public interface IUserService
     Task<bool> DeleteUserAsync(string id);
     Task<List<UserPublicDto>> ListUsersAsync();
     Task<List<object>> GetFavoritesAsync(string userId);
+    Task<List<object>> GetLikesAsync(string userId);
     Task<List<MyCommentDto>> GetUserCommentsAsync(string userId);
 }

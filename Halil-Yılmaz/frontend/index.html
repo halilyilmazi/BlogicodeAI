@@ -163,9 +163,28 @@
         }
         .footer-links a:hover { text-decoration: underline; color: #bfdbfe; }
         .footer-col-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 0 0 12px; font-weight: 700; }
-        .site-footer .footer-inner ~ div {
+        .footer-legal-panel {
+            margin-top: 8px;
+            padding: 28px 20px 32px;
+            border-top: 1px solid rgba(71, 85, 105, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
         }
+        .footer-legal-inner {
+            max-width: 56rem;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .footer-legal-line {
+            margin: 0 0 14px;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.55;
+        }
+        .footer-legal-line:last-child { margin-bottom: 0; }
+        .footer-legal-line strong { color: #94a3b8; font-weight: 600; }
         .posts-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -349,14 +368,12 @@
                 </nav>
             </div>
         </div>
-        <div id="gizlilik" style="max-width:1160px;margin:20px auto 0;padding:0 20px;font-size:13px;color:#64748b;line-height:1.5;">
-            <strong style="color:#94a3b8;">Gizlilik Politikası:</strong> Toplanan veriler yalnızca hizmeti sunmak ve güvenliği sağlamak için kullanılır; üçüncü taraflarla paylaşılmaz.
-        </div>
-        <div id="kullanim" style="max-width:1160px;margin:12px auto 0;padding:0 20px;font-size:13px;color:#64748b;line-height:1.5;">
-            <strong style="color:#94a3b8;">Kullanım Şartları:</strong> Platformu kötüye kullanmak, yasadışı içerik paylaşmak veya diğer kullanıcıları rahatsız etmek yasaktır.
-        </div>
-        <div id="hakkimizda" style="max-width:1160px;margin:12px auto 0;padding:0 20px 8px;font-size:13px;color:#64748b;line-height:1.5;">
-            <strong style="color:#94a3b8;">Hakkımızda:</strong> BlogicodeAI, teknoloji ve yapay zeka odaklı içerik üreticilerinin buluşma noktasıdır.
+        <div class="footer-legal-panel" aria-label="Yasal bilgilendirme">
+            <div class="footer-legal-inner">
+                <p class="footer-legal-line" id="gizlilik"><strong>Gizlilik Politikası:</strong> Toplanan veriler yalnızca hizmeti sunmak ve güvenliği sağlamak için kullanılır; üçüncü taraflarla paylaşılmaz.</p>
+                <p class="footer-legal-line" id="kullanim"><strong>Kullanım Şartları:</strong> Platformu kötüye kullanmak, yasadışı içerik paylaşmak veya diğer kullanıcıları rahatsız etmek yasaktır.</p>
+                <p class="footer-legal-line" id="hakkimizda"><strong>Hakkımızda:</strong> BlogicodeAI, teknoloji ve yapay zeka odaklı içerik üreticilerinin buluşma noktasıdır.</p>
+            </div>
         </div>
     </footer>
 

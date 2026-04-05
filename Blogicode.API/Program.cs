@@ -1,6 +1,7 @@
 using Blogicode.API.Data;
 using Blogicode.API.Services;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);

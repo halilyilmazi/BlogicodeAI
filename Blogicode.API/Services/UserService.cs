@@ -46,8 +46,9 @@ public class UserService : IUserService
 
         updates.Add(Builders<User>.Update.Set(u => u.UpdatedAt, DateTime.UtcNow));
         var combined = Builders<User>.Update.Combine(updates);
-        var opt = new FindOneAndUpdateOptions<User> { ReturnDocument = ReturnDocument.After };
-        var updated = await _db.Users.FindOneAndUpdateAsync(u => u.Id == oid, combined, opt);
+        var filter = Builders<User>.Filter.Eq(u => u.Id, oid);
+        var opt = new FindOneAndUpdateOptions<User, User> { ReturnDocument = ReturnDocument.After };
+        var updated = await _db.Users.FindOneAndUpdateAsync(filter, combined, opt, CancellationToken.None);
         return updated == null ? null : UserMapper.ToPublic(updated);
     }
 
@@ -72,6 +73,15 @@ public class UserService : IUserService
     public async Task<List<object>> GetFavoritesAsync(string userId)
     {
         var posts = await _db.Posts.Find(p => p.FavoritedBy.Contains(userId)).SortByDescending(p => p.CreatedAt).ToListAsync();
+        var allComments = await _db.Comments.Find(_ => true).ToListAsync();
+        var countByPost = allComments.GroupBy(c => c.PostId).ToDictionary(g => g.Key, g => g.Count());
+
+        return posts.Select(p => PostFormatter.ToListItem(p, countByPost.GetValueOrDefault(p.Id.ToString(), 0))).Cast<object>().ToList();
+    }
+
+    public async Task<List<object>> GetLikesAsync(string userId)
+    {
+        var posts = await _db.Posts.Find(p => p.LikedBy.Contains(userId)).SortByDescending(p => p.CreatedAt).ToListAsync();
         var allComments = await _db.Comments.Find(_ => true).ToListAsync();
         var countByPost = allComments.GroupBy(c => c.PostId).ToDictionary(g => g.Key, g => g.Count());
 

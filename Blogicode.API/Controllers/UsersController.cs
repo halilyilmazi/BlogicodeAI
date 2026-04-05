@@ -27,6 +27,13 @@ public class UsersController : ControllerBase
         return Ok(new { data });
     }
 
+    [HttpGet("{id}/likes")]
+    public async Task<IActionResult> Likes(string id)
+    {
+        var data = await _users.GetLikesAsync(id);
+        return Ok(new { data });
+    }
+
     [HttpGet("{id}/comments")]
     public async Task<IActionResult> UserComments(string id)
     {

@@ -59,6 +59,46 @@
             border-top: 1px solid rgba(71, 85, 105, 0.45);
             line-height: 1.4;
         }
+        .theme-chat-suggestions button#btnPersonalizedPosts {
+            border-color: rgba(139, 92, 246, 0.55);
+            background: linear-gradient(100deg, rgba(139, 92, 246, 0.35), rgba(59, 130, 246, 0.28));
+            font-weight: 600;
+            color: #f8fafc;
+        }
+        .theme-chat-suggestions button#btnPersonalizedPosts:hover:not(:disabled) {
+            border-color: rgba(167, 139, 250, 0.75);
+            background: linear-gradient(100deg, rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.4));
+        }
+        .theme-chat-suggestions button#btnPersonalizedPosts:disabled {
+            opacity: 0.55;
+            cursor: wait;
+        }
+        .chat-rec-wrap { margin-top: 10px; display: flex; flex-direction: column; gap: 12px; }
+        .chat-rec-card {
+            text-align: left;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(71, 85, 105, 0.65);
+            background: rgba(15, 23, 42, 0.75);
+        }
+        .chat-rec-card h4 {
+            margin: 0 0 6px;
+            font-size: 15px;
+            font-family: 'Outfit', sans-serif;
+            color: #f8fafc;
+            line-height: 1.3;
+        }
+        .chat-rec-meta { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+        .chat-rec-meta span { color: #93c5fd; font-weight: 600; }
+        .chat-rec-excerpt { font-size: 13px; color: #cbd5e1; line-height: 1.45; margin: 0 0 10px; }
+        .chat-rec-card a {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #93c5fd;
+            text-decoration: none;
+        }
+        .chat-rec-card a:hover { text-decoration: underline; color: #bfdbfe; }
     </style>
 </head>
 <body class="theme-body">
@@ -91,7 +131,8 @@
     <div class="theme-chat-page">
         <h1 class="theme-page-title" style="margin-bottom:4px;">Sohbet</h1>
         <p class="theme-page-sub" style="margin-bottom:12px;">Teknoloji, kod, güncel gündem ve trend konularda sor; kısa ve net yanıtlar alırsın. Gerekirse web aramasıyla güncel kaynaklar kullanılır.</p>
-        <div class="theme-chat-suggestions" aria-label="Örnek sorular">
+        <div class="theme-chat-suggestions" aria-label="Örnek sorular ve kişiselleştirme">
+            <button type="button" id="btnPersonalizedPosts">Bana Kişiselleştirilmiş Yazılar Sun</button>
             <button type="button" data-prompt="Bugün teknoloji dünyasında öne çıkan birkaç başlığı kısaca özetle.">Günün teknoloji özeti</button>
             <button type="button" data-prompt="Yapay zeka alanında şu dönemde sık konuşulan trendler neler? Madde madde kısa tut.">AI trendleri</button>
             <button type="button" data-prompt="Junior bir yazılımcı için bu hafta öğrenmeye değer 3 konu öner.">Öğrenme önerisi</button>
@@ -116,9 +157,14 @@
         /** @type {{ role: string, text: string }[]} */
         let conversationHistory = [];
 
-        if (!localStorage.getItem('userId')) {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
             window.location.href = 'index.html';
         }
+
+        document.getElementById('btnPersonalizedPosts').addEventListener('click', function () {
+            showPersonalizedPosts();
+        });
 
         document.querySelectorAll('.theme-chat-suggestions button[data-prompt]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -143,6 +189,191 @@
             return d.innerHTML;
         }
 
+        function postIdOf(p) {
+            if (!p) return '';
+            return String(p._id != null ? p._id : (p.id != null ? p.id : ''));
+        }
+
+        function tokenize(text) {
+            if (!text) return [];
+            return String(text)
+                .toLowerCase()
+                .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+                .split(/\s+/)
+                .filter(function (w) { return w.length >= 3; });
+        }
+
+        function addSignalsFromPost(post, categoryWeight, wordWeight, interacted) {
+            var id = postIdOf(post);
+            if (id) interacted.add(id);
+            var cat = (post.category != null ? String(post.category) : '').trim().toLowerCase();
+            if (cat) {
+                categoryWeight.set(cat, (categoryWeight.get(cat) || 0) + 1);
+            }
+            tokenize(post.title).forEach(function (w) {
+                wordWeight.set(w, (wordWeight.get(w) || 0) + 1);
+            });
+            var tags = post.tags;
+            if (Array.isArray(tags)) {
+                tags.forEach(function (t) {
+                    var tw = String(t).toLowerCase().trim();
+                    if (tw.length >= 2) {
+                        wordWeight.set(tw, (wordWeight.get(tw) || 0) + 1);
+                    }
+                });
+            }
+        }
+
+        function scoreCandidate(post, categoryWeight, wordWeight) {
+            var s = 0;
+            var cat = (post.category != null ? String(post.category) : '').trim().toLowerCase();
+            if (cat && categoryWeight.has(cat)) {
+                s += 6 * categoryWeight.get(cat);
+            }
+            tokenize(post.title).forEach(function (w) {
+                if (wordWeight.has(w)) {
+                    s += 2 * wordWeight.get(w);
+                }
+            });
+            var tags = post.tags;
+            if (Array.isArray(tags)) {
+                tags.forEach(function (t) {
+                    var tw = String(t).toLowerCase().trim();
+                    if (tw.length >= 2 && wordWeight.has(tw)) {
+                        s += 3 * wordWeight.get(tw);
+                    }
+                });
+            }
+            s += (post.popularity != null ? Number(post.popularity) : 0) * 0.02;
+            return s;
+        }
+
+        function pickPersonalizedPosts(allPosts, favorited, liked) {
+            var interacted = new Set();
+            var categoryWeight = new Map();
+            var wordWeight = new Map();
+            favorited.forEach(function (p) { addSignalsFromPost(p, categoryWeight, wordWeight, interacted); });
+            liked.forEach(function (p) { addSignalsFromPost(p, categoryWeight, wordWeight, interacted); });
+
+            var hasPrefs = categoryWeight.size > 0 || wordWeight.size > 0;
+            var pool = allPosts.filter(function (p) { return !interacted.has(postIdOf(p)); });
+            if (pool.length === 0) {
+                pool = allPosts.slice();
+            }
+
+            if (hasPrefs) {
+                pool.sort(function (a, b) {
+                    var sa = scoreCandidate(a, categoryWeight, wordWeight);
+                    var sb = scoreCandidate(b, categoryWeight, wordWeight);
+                    if (sb !== sa) return sb - sa;
+                    var pa = a.popularity != null ? a.popularity : 0;
+                    var pb = b.popularity != null ? b.popularity : 0;
+                    return pb - pa;
+                });
+            } else {
+                pool.sort(function (a, b) {
+                    var pa = a.popularity != null ? a.popularity : 0;
+                    var pb = b.popularity != null ? b.popularity : 0;
+                    return pb - pa;
+                });
+            }
+
+            return {
+                picks: pool.slice(0, 3),
+                hasPrefs: hasPrefs,
+                signalCount: favorited.length + liked.length
+            };
+        }
+
+        function excerptOf(content) {
+            var t = content != null ? String(content).replace(/\s+/g, ' ').trim() : '';
+            if (t.length <= 160) return t;
+            return t.slice(0, 160) + '…';
+        }
+
+        function renderRecommendationHtml(posts, introHtml) {
+            var cards = posts.map(function (post) {
+                var title = escapeHtml(post.title || 'Başlıksız');
+                var cat = escapeHtml(post.category != null && String(post.category).trim() ? post.category : 'Genel');
+                var ex = escapeHtml(excerptOf(post.content));
+                return (
+                    '<div class="chat-rec-card">' +
+                    '<h4>' + title + '</h4>' +
+                    '<div class="chat-rec-meta">Kategori: <span>' + cat + '</span></div>' +
+                    '<p class="chat-rec-excerpt">' + ex + '</p>' +
+                    '<a href="index.html" target="_blank" rel="noopener noreferrer">Keşfet’te aç →</a>' +
+                    '</div>'
+                );
+            }).join('');
+            return '<p style="margin:0 0 8px;line-height:1.5;">' + introHtml + '</p><div class="chat-rec-wrap">' + cards + '</div>';
+        }
+
+        async function showPersonalizedPosts() {
+            var btn = document.getElementById('btnPersonalizedPosts');
+            var chatBox = document.getElementById('chatBox');
+            var welcome = document.getElementById('welcomeMsg');
+            if (welcome) welcome.remove();
+
+            btn.disabled = true;
+            chatBox.innerHTML += '<div class="theme-msg user">' + escapeHtml('Bana kişiselleştirilmiş yazılar sun.') + '</div>';
+
+            var typingId = 'typing-' + Date.now();
+            chatBox.innerHTML += '<div class="theme-msg bot" id="' + typingId + '"><em>Öneriler hazırlanıyor…</em></div>';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                var base = apiUrl.replace(/\/$/, '');
+                var headers = { 'Content-Type': 'application/json' };
+                var resFav = await fetch(base + '/users/' + encodeURIComponent(userId) + '/favorites', { headers: headers });
+                var resLike = await fetch(base + '/users/' + encodeURIComponent(userId) + '/likes', { headers: headers });
+                var resPosts = await fetch(base + '/posts?sort=popular', { headers: headers });
+
+                var jFav = resFav.ok ? await resFav.json().catch(function () { return {}; }) : {};
+                var jLike = resLike.ok ? await resLike.json().catch(function () { return {}; }) : {};
+                var jPosts = resPosts.ok ? await resPosts.json().catch(function () { return {}; }) : {};
+
+                var favorited = Array.isArray(jFav.data) ? jFav.data : [];
+                var liked = Array.isArray(jLike.data) ? jLike.data : [];
+                var allPosts = Array.isArray(jPosts.data) ? jPosts.data : [];
+
+                var typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+
+                if (!resPosts.ok || allPosts.length === 0) {
+                    chatBox.innerHTML += '<div class="theme-msg bot" style="color:#f87171;">Yazılar yüklenemedi. API bağlantısını kontrol edin.</div>';
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    btn.disabled = false;
+                    return;
+                }
+
+                var result = pickPersonalizedPosts(allPosts, favorited, liked);
+                var picks = result.picks;
+
+                var intro;
+                if (result.signalCount === 0) {
+                    intro = escapeHtml('Henüz beğendiğin veya favorilediğin bir yazı yok; şimdilik platformdaki popüler yazılardan üçünü seçtim. Keşfet’te beğenip favoriledikçe önerilerin daha da kişiselleşir.');
+                } else if (!result.hasPrefs) {
+                    intro = escapeHtml('Etkileşimde bulunduğun yazılardan konu çıkarılamadı; yine de popüler içeriklerden üç öneri hazırladım.');
+                } else {
+                    intro = escapeHtml('Beğendiğin ve favorilediğin yazıların kategori ve başlıklarına göre sana uygun üç yazı:');
+                }
+
+                var blockHtml = renderRecommendationHtml(picks, intro);
+                var wrap = document.createElement('div');
+                wrap.className = 'theme-msg bot';
+                wrap.innerHTML = blockHtml;
+                chatBox.appendChild(wrap);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (err) {
+                var typingEl2 = document.getElementById(typingId);
+                if (typingEl2) typingEl2.remove();
+                chatBox.innerHTML += '<div class="theme-msg bot" style="color:#f87171;">Öneriler alınırken bir hata oluştu.</div>';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            btn.disabled = false;
+        }
+
         function yeniSohbet() {
             conversationHistory = [];
             var chatBox = document.getElementById('chatBox');
@@ -150,6 +381,7 @@
                 escapeHtml('Merhaba! Ben BlogicodeAI asistanıyım. Teknoloji, yazılım ve güncel konularda sorularını yanıtlayabilirim. Nasıl yardımcı olayım?') +
                 '</div>';
             document.getElementById('userInput').value = '';
+            document.getElementById('btnPersonalizedPosts').disabled = false;
         }
 
         async function mesajGonder() {

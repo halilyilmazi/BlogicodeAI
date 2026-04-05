@@ -373,6 +373,36 @@ app.get('/api/users/:id/favorites', async (req, res) => {
     }
 });
 
+app.get('/api/users/:id/likes', async (req, res) => {
+    try {
+        const uid = req.params.id;
+        const pipeline = [
+            { $match: { likedBy: uid } },
+            {
+                $lookup: {
+                    from: 'comments',
+                    let: { pid: { $toString: '$_id' } },
+                    pipeline: [{ $match: { $expr: { $eq: ['$postId', '$$pid'] } } }],
+                    as: 'commentDocs'
+                }
+            },
+            {
+                $addFields: {
+                    commentCount: { $size: '$commentDocs' },
+                    likeCount: { $ifNull: ['$likeCount', 0] },
+                    favoriteCount: { $ifNull: ['$favoriteCount', 0] }
+                }
+            },
+            { $sort: { createdAt: -1 } },
+            { $project: { commentDocs: 0 } }
+        ];
+        const posts = await Post.aggregate(pipeline);
+        res.status(200).json({ data: posts });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.put('/api/posts/:id', async (req, res) => {
     try {
         const { title, content, category, authorId } = req.body;
