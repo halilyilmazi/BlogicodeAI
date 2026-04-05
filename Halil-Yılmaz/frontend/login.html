@@ -111,7 +111,7 @@
                     }
                 } else {
                     messageText.style.color = '#f87171';
-                    messageText.innerText = data.message || 'Bir hata oluştu.';
+                    messageText.innerText = data.message || data.error || 'Bir hata oluştu.';
                 }
             } catch (error) {
                 messageText.style.color = '#f87171';

@@ -21,7 +21,8 @@
 ## Proje Linkleri
 
 - **Canlı site (ör. arayüz):** [https://www.blogicodeai.com](https://www.blogicodeai.com)  
-- **Canlı REST API:** `https://blogicode-ai.vercel.app/api`
+- **Canlı REST API:** `https://blogicode-ai.vercel.app/api`  
+  *(Vercel’de `MONGODB_URI` ortam değişkeni yoksa yazılar ve giriş çalışmaz; Atlas bağlantı dizisini ekleyip yeniden deploy edin.)*
 
 ---
 

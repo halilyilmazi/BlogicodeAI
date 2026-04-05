@@ -21,7 +21,11 @@ if (mongoURI) {
         .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
         .catch((err) => console.log("Veritabanı bağlantı hatası:", err));
 } else {
-    console.error('MONGODB_URI tanımlı değil. Vercel → Settings → Environment Variables → MONGODB_URI ekleyin; yerelde backend/.env kullanın.');
+    if (process.env.VERCEL) {
+        console.warn('[Blogicode] MONGODB_URI eksik — veritabanı API’leri 503 dönecek; Vercel’e ortam değişkeni ekleyin.');
+    } else {
+        console.error('MONGODB_URI tanımlı değil. Vercel → Settings → Environment Variables → MONGODB_URI ekleyin; yerelde backend/.env kullanın.');
+    }
     if (require.main === module && !process.env.VERCEL) {
         console.error('Yerel çalıştırma için çıkılıyor (node index.js).');
         process.exit(1);
@@ -83,6 +87,22 @@ function userToPublic(userDoc) {
     delete o.password;
     return o;
 }
+
+/** Vercel'de MONGODB_URI yokken Mongoose sorguları 500 üretir; önce net 503 döndür (CORS için OPTIONS atlanır). */
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') return next();
+    if (!req.path.startsWith('/api')) return next();
+    if (req.path === '/api/health') return next();
+    if (req.path === '/api/chatbot') return next();
+    if (!mongoURI) {
+        return res.status(503).json({
+            error: 'Veritabanı yapılandırılmadı',
+            code: 'MONGODB_URI_MISSING',
+            message: 'Sunucuda MONGODB_URI tanımlı değil. Vercel → Project → Settings → Environment Variables → MONGODB_URI ekleyin (MongoDB Atlas bağlantı dizisi), kaydedin ve Redeploy yapın. Atlas Network Access: 0.0.0.0/0 veya Vercel IP.'
+        });
+    }
+    return next();
+});
 
 // --- 11 GEREKSİNİM İÇİN API ROTALARI ---
 

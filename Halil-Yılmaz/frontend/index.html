@@ -556,7 +556,7 @@
                     }
                 } else {
                     messageText.style.color = '#f87171';
-                    messageText.textContent = data.message || 'Bir hata oluştu.';
+                    messageText.textContent = data.message || data.error || 'Bir hata oluştu.';
                 }
             } catch (e) {
                 messageText.style.color = '#f87171';
@@ -694,7 +694,11 @@
 
                 if (!response.ok) {
                     const errMsg = result.error || result.message || ('HTTP ' + response.status);
-                    feedDiv.innerHTML = '<p style="color:#f87171;line-height:1.5;">Sunucu hatası: ' + escapeHtml(String(errMsg)) + '</p><p style="color:#94a3b8;font-size:14px;margin-top:10px;">Yerelde test ediyorsan: <code style="color:#cbd5e1;">node index.js</code> ile backend\'i çalıştır ve sayfayı <strong>http://localhost:3000</strong> veya <strong>http://127.0.0.1:3000</strong> üzerinden aç.</p>';
+                    let hint = '<p style="color:#94a3b8;font-size:14px;margin-top:10px;">Yerelde test ediyorsan: <code style="color:#cbd5e1;">node index.js</code> ile backend\'i çalıştır ve sayfayı <strong>http://localhost:3000</strong> veya <strong>http://127.0.0.1:3000</strong> üzerinden aç.</p>';
+                    if (result.code === 'MONGODB_URI_MISSING') {
+                        hint = '<p style="color:#94a3b8;font-size:14px;margin-top:10px;line-height:1.5;">Canlıda yazılar ve giriş için Vercel projenizde <strong>Settings → Environment Variables</strong> içine <code style="color:#cbd5e1;">MONGODB_URI</code> ekleyin (MongoDB Atlas’tan kopyaladığınız bağlantı dizisi), kaydedip <strong>Redeploy</strong> yapın. Atlas’ta <strong>Network Access</strong> için IP kısıtı yoksa veya <code style="color:#cbd5e1;">0.0.0.0/0</code> açık olsun.</p>';
+                    }
+                    feedDiv.innerHTML = '<p style="color:#f87171;line-height:1.5;">' + escapeHtml(String(errMsg)) + '</p>' + hint;
                     return;
                 }
 
