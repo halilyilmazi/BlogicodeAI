@@ -2,7 +2,7 @@
 
 ## YouTube — Postman + canlı domain kanıtı
 
-**Video linki (buraya kendi videonu yapıştır):** [YouTube’da aç](https://www.youtube.com/watch?v=VIDEO_ID_BURAYA)
+**Video linki (buraya kendi videonu yapıştır):** [YouTube’da aç](https://youtu.be/hFB8fLDNV9o)
 
 Videoda göster:
 
