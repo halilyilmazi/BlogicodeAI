@@ -1,9 +1,14 @@
 /**
  * Örnek blog yazılarını ekler. Tekrar çalıştırılabilir: yalnızca etiketli seed yoksa ekler.
  */
+require('dotenv').config();
 const mongoose = require('mongoose');
 
-const mongoURI = "mongodb+srv://ylmzyzlm:tqAR4Qxj@cluster0.yzs8d09.mongodb.net/blogicode?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = process.env.MONGODB_URI;
+if (!mongoURI) {
+    console.error('MONGODB_URI tanımlı değil. backend/.env dosyasına index.js ile aynı satırı ekleyin.');
+    process.exit(1);
+}
 
 const User = mongoose.model('User', new mongoose.Schema({
     firstName: String,

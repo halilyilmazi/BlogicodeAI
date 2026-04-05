@@ -934,9 +934,16 @@
 
             try {
                 const response = await fetch(url);
-                const result = await response.json();
+                const result = await response.json().catch(() => ({}));
 
-                if (!result.data || result.data.length === 0) {
+                if (!response.ok) {
+                    const errMsg = result.error || result.message || ('HTTP ' + response.status);
+                    feedDiv.innerHTML = '<p style="color:#f87171;line-height:1.5;">Sunucu hatası: ' + escapeHtml(String(errMsg)) + '</p><p style="color:#94a3b8;font-size:14px;margin-top:10px;">Yerelde test ediyorsan: <code style="color:#cbd5e1;">node index.js</code> ile backend\'i çalıştır ve sayfayı <strong>http://localhost:3000</strong> veya <strong>http://127.0.0.1:3000</strong> üzerinden aç.</p>';
+                    return;
+                }
+
+                const rows = Array.isArray(result.data) ? result.data : [];
+                if (rows.length === 0) {
                     feedDiv.innerHTML = '<p>Bu filtreye uygun yazı bulunamadı.</p>';
                     return;
                 }
@@ -946,7 +953,7 @@
                 grid.className = 'posts-grid';
                 feedDiv.appendChild(grid);
 
-                result.data.forEach((post) => {
+                rows.forEach((post) => {
                     const pid = post._id;
                     const date = new Date(post.createdAt).toLocaleDateString('tr-TR');
                     const likes = post.likeCount != null ? post.likeCount : 0;

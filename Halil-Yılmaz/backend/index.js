@@ -1,3 +1,6 @@
+require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -7,9 +10,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- MONGODB BAĞLANTISI ---
-// Yapay zekanın bozduğu o bağlantıyı tekrar senin orijinal linkinle değiştirdik.
-const mongoURI = "mongodb+srv://ylmzyzlm:tqAR4Qxj@cluster0.yzs8d09.mongodb.net/blogicode?retryWrites=true&w=majority&appName=Cluster0";
+const frontendDir = path.resolve(__dirname, '..', 'frontend');
+const indexHtmlPath = path.join(frontendDir, 'index.html');
+
+// --- MONGODB: backend/.env içinde MONGODB_URI (Atlas "Connect" ile kopyalanan tam adres)
+const mongoURI = process.env.MONGODB_URI;
+if (!mongoURI) {
+    console.error('MONGODB_URI eksik. backend klasöründe .env dosyası oluşturup şunu ekleyin:');
+    console.error('MONGODB_URI=mongodb+srv://KULLANICI:SIFRE@cluster.../blogicode?...');
+    process.exit(1);
+}
 
 mongoose.connect(mongoURI)
     .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
@@ -416,9 +426,9 @@ app.post('/api/chatbot', async (req, res) => {
     }
 });
 
-// Ana Sayfa Kontrolü
-app.get('/', (req, res) => {
-    res.json({ mesaj: "BlogicodeAI API'si MongoDB ve Gemini destekli olarak tıkır tıkır çalışıyor!" });
+// API durumu (statik site / kök index.html ile çakışmaması için ayrı yol)
+app.get('/api/health', (req, res) => {
+    res.json({ ok: true, mesaj: "BlogicodeAI API çalışıyor." });
 });
 // YÖNETİCİ İÇİN: Tüm Kullanıcıları Getir
 app.get('/api/users', async (req, res) => {
@@ -431,8 +441,35 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-// Sunucuyu Başlat
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Sunucu http://localhost:${PORT} adresinde aktif!`);
+// Statik site (config.js, robot-celik.svg vb.) + kök sayfa
+if (fs.existsSync(indexHtmlPath)) {
+    app.get('/', (req, res) => {
+        try {
+            const html = fs.readFileSync(indexHtmlPath, 'utf8');
+            res.type('html').send(html);
+        } catch (e) {
+            console.error('index.html okunamadı:', e.message);
+            res.status(500).type('text').send('index.html okunamadı: ' + e.message);
+        }
+    });
+    app.use(express.static(frontendDir, { index: false }));
+} else {
+    console.error('frontend/index.html bulunamadı:', indexHtmlPath);
+    app.get('/', (req, res) => {
+        res.status(404).type('text').send(
+            'index.html bulunamadı.\nBeklenen yol: ' + indexHtmlPath + '\nSunucuyu Halil-Yılmaz\\backend klasöründen çalıştırdığından emin ol.'
+        );
+    });
+}
+
+const PORT = Number(process.env.PORT) || 3000;
+const server = app.listen(PORT, () => {
+    console.log(`Sunucu port ${PORT} üzerinde dinliyor.`);
+    console.log(`[Blogicode] index.html: ${indexHtmlPath}`);
+    console.log(`[Blogicode] dosya var mı: ${fs.existsSync(indexHtmlPath)}`);
+    console.log(`Tarayıcıda aç: http://127.0.0.1:${PORT}/ (mümkünse önce bunu dene)`);
+    console.log('https:// kullanma. Port 3000\'de başka bir program varsa kapat veya PORT=3001 node index.js kullan.');
+});
+server.on('error', (err) => {
+    console.error('Sunucu başlamadı (port meşgul olabilir):', err.message);
 });
