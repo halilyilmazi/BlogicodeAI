@@ -186,6 +186,16 @@ app.post('/api/chatbot', async (req, res) => {
 app.get('/', (req, res) => {
     res.json({ mesaj: "BlogicodeAI API'si MongoDB ve Gemini destekli olarak tıkır tıkır çalışıyor!" });
 });
+// YÖNETİCİ İÇİN: Tüm Kullanıcıları Getir
+app.get('/api/users', async (req, res) => {
+    try {
+        // Güvenlik için şifreleri '-password' diyerek gizliyoruz
+        const users = await User.find({}, '-password').sort({ createdAt: -1 });
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Kullanıcılar getirilirken hata oluştu." });
+    }
+});
 
 // Sunucuyu Başlat
 const PORT = process.env.PORT || 3000;
