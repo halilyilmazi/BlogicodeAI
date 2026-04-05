@@ -117,6 +117,27 @@
             cursor: pointer;
             float: left;
             margin-top: 15px;
+        }
+        .post-reactions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            clear: both;
+        }
+        .post-reactions button {
+            background: #e4e6eb;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+        }
+        .post-reactions button:hover { background: #d8dadf; }
+        .post-reactions .count { font-weight: 700; color: #1877f2; margin-left: 4px; }
         /* Yorum Kısmı CSS */
         .comment-section { 
             margin-top: 15px; 
@@ -146,7 +167,6 @@
         .comment-btn:hover { 
             background-color: #166fe5; 
         }
-        }
         /* Ekrana Basılan Yorumun Tasarımı */
         .comment-item {
             background-color: #f8f9fa;
@@ -164,7 +184,8 @@
     <div class="navbar">
         <h1>BlogicodeAI</h1>
         <div>
-            <button class="logout-btn" onclick="window.location.href='profile.html'" style="margin-right: 10px;">👤 Profilim</button>
+            <button class="logout-btn" onclick="window.location.href='index.html'" style="margin-right: 10px;">🏠 Keşfet</button>
+            <button class="logout-btn" onclick="window.location.href='panel.html'" style="margin-right: 10px;">👤 Panelim</button>
             <button class="logout-btn" onclick="window.location.href='chatbot.html'" style="margin-right: 10px;">🤖 Asistan</button>
             <button class="logout-btn" onclick="cikisYap()">Çıkış Yap</button>
         </div>
@@ -186,8 +207,9 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        const apiUrl = window.BLOGICODE_API_BASE;
         
         // Kullanıcı giriş yapmamışsa (ID'si yoksa) login sayfasına kov
         const userId = localStorage.getItem('userId');
@@ -216,6 +238,9 @@
                 // Yazıları tek tek HTML'e dönüştür ve ekrana bas
                 result.data.forEach(post => {
                     const date = new Date(post.createdAt).toLocaleString('tr-TR');
+                    const likes = post.likeCount != null ? post.likeCount : 0;
+                    const favs = post.favoriteCount != null ? post.favoriteCount : 0;
+                    const commentCount = post.commentCount != null ? post.commentCount : 0;
                     
                     // Eğer yazıyı giren kişi şu anki kullanıcıysa Sil butonunu göster
                     const deleteBtnHtml = (post.authorId === userId) 
@@ -227,6 +252,11 @@
                             <h3>${post.title}</h3>
                             <span class="category">${post.category || 'Genel'}</span>
                             <div class="content">${post.content}</div>
+                            <div class="post-reactions">
+                                <button type="button" onclick="reaksiyonGonder('${post._id}','like')">❤️ Beğen<span class="count" id="like-c-${post._id}">${likes}</span></button>
+                                <button type="button" onclick="reaksiyonGonder('${post._id}','favorite')">⭐ Favori<span class="count" id="fav-c-${post._id}">${favs}</span></button>
+                                <span style="font-size:13px;color:#666;align-self:center;">💬 ${commentCount} yorum</span>
+                            </div>
                             ${deleteBtnHtml}
                             <div class="date">${date}</div>
                             <div class="comment-section">
@@ -297,11 +327,12 @@
         async function yaziSil(postId) {
             if(confirm("Bu yazıyı kalıcı olarak silmek istiyor musun?")) {
                 try {
-                    const res = await fetch(apiUrl + '/posts/' + postId, { method: 'DELETE' });
-                    if(res.ok) {
-                        document.getElementById('post-' + postId).remove(); // Ekranda anında yok et
+                    const res = await fetch(apiUrl + '/posts/' + postId + '?authorId=' + encodeURIComponent(userId), { method: 'DELETE' });
+                    if (res.ok || res.status === 204) {
+                        document.getElementById('post-' + postId).remove();
                     } else {
-                        alert("Silinemedi.");
+                        const d = await res.json().catch(() => ({}));
+                        alert(d.message || 'Silinemedi.');
                     }
                 } catch (error) { 
                     alert("Sunucu hatası, silinemedi."); 
@@ -338,11 +369,34 @@
                 alert("Sunucuya bağlanılamadı.");
             }
         }
+        async function reaksiyonGonder(postId, action) {
+            try {
+                const res = await fetch(apiUrl + '/posts/' + postId + '/react', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, action })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.post) {
+                    const l = document.getElementById('like-c-' + postId);
+                    const f = document.getElementById('fav-c-' + postId);
+                    if (l) l.textContent = data.post.likeCount != null ? data.post.likeCount : 0;
+                    if (f) f.textContent = data.post.favoriteCount != null ? data.post.favoriteCount : 0;
+                } else if (res.status === 200 && data.message === 'Zaten işaretli.') {
+                    /* sessiz */
+                } else {
+                    alert(data.message || 'İşlem yapılamadı.');
+                }
+            } catch (e) {
+                alert('Sunucuya bağlanılamadı.');
+            }
+        }
+
         // Çıkış Yapma Fonksiyonu
         function cikisYap() {
             localStorage.removeItem('userId');
             localStorage.removeItem('userToken');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     </script>
 

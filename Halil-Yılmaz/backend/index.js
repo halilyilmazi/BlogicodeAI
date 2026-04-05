@@ -34,8 +34,27 @@ const Post = mongoose.model('Post', new mongoose.Schema({
     content: { type: String, required: true },
     category: { type: String },
     authorId: { type: String, required: true },
-    tags: [String]
+    tags: [String],
+    likeCount: { type: Number, default: 0 },
+    favoriteCount: { type: Number, default: 0 },
+    likedBy: { type: [String], default: [] },
+    favoritedBy: { type: [String], default: [] }
 }, { timestamps: true }));
+
+const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const TOPIC_KEYWORDS = {
+    'yapay-zeka': ['yapay zeka', 'machine learning', 'derin öğrenme', 'deep learning', 'chatgpt', 'llm', 'nlp', 'tensorflow', 'pytorch'],
+    'yazilim': ['yazılım', 'yazilim', 'programlama', 'developer', 'kod', 'coding', 'javascript', 'python', 'java', 'frontend', 'backend'],
+    'bulut': ['bulut', 'cloud', 'aws', 'azure', 'gcp', 'saas', 'serverless'],
+    'siber-guvenlik': ['siber', 'güvenlik', 'security', 'pentest', 'malware', 'şifreleme', 'encryption', 'zero trust'],
+    'veri-bilimi': ['veri bilimi', 'data science', 'analitik', 'big data', 'etl', 'pandas', 'numpy'],
+    'blockchain': ['blockchain', 'kripto', 'bitcoin', 'ethereum', 'web3', 'nft', 'defi'],
+    'mobil': ['mobil', 'android', 'ios', 'swift', 'kotlin', 'flutter', 'react native'],
+    'devops': ['devops', 'docker', 'kubernetes', 'k8s', 'ci/cd', 'jenkins', 'gitops', 'terraform'],
+    'ag-teknolojileri': ['ağ', 'network', 'tcp', 'routing', 'switch', 'vlan', 'cisco'],
+    'veritabani': ['veritabanı', 'veritabani', 'database', 'sql', 'mongodb', 'postgresql', 'redis', 'nosql']
+};
 
 const Comment = mongoose.model('Comment', new mongoose.Schema({
     postId: { type: String, required: true },
@@ -91,8 +110,21 @@ app.get('/api/users/:id', async (req, res) => {
 // 4. Profil Güncelleme
 app.put('/api/users/:id', async (req, res) => {
     try {
-        const { username, bio, profilePhoto } = req.body;
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, { username, bio, profilePhoto }, { new: true });
+        const {
+            username, bio, profilePhoto, firstName, lastName,
+            profession, gender, birthDate
+        } = req.body;
+        const patch = {};
+        if (username !== undefined) patch.username = username;
+        if (bio !== undefined) patch.bio = bio;
+        if (profilePhoto !== undefined) patch.profilePhoto = profilePhoto;
+        if (firstName !== undefined) patch.firstName = firstName;
+        if (lastName !== undefined) patch.lastName = lastName;
+        if (profession !== undefined) patch.profession = profession;
+        if (gender !== undefined) patch.gender = gender;
+        if (birthDate !== undefined) patch.birthDate = birthDate;
+
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, patch, { new: true });
         if (!updatedUser) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
         res.status(200).json({ message: "Profil başarıyla güncellendi", user: updatedUser });
     } catch (error) {
@@ -120,21 +152,159 @@ app.post('/api/posts', async (req, res) => {
     }
 });
 
-// 7. Blog Yazılarını Listeleme
+function buildTopicMatch(topic) {
+    const keywords = TOPIC_KEYWORDS[topic];
+    if (!keywords || !keywords.length) return null;
+    const or = [];
+    for (const kw of keywords) {
+        const rx = new RegExp(escapeRegex(kw), 'i');
+        or.push({ category: rx }, { title: rx }, { content: rx }, { tags: rx });
+    }
+    return { $or: or };
+}
+
+// 7. Blog Yazılarını Listeleme (topic, sort=recent|popular)
 app.get('/api/posts', async (req, res) => {
     try {
-        const posts = await Post.find().sort({ createdAt: -1 });
+        const sort = (req.query.sort || 'recent').toLowerCase();
+        const topic = req.query.topic ? String(req.query.topic).trim() : '';
+
+        if (topic && !TOPIC_KEYWORDS[topic]) {
+            return res.status(200).json({ data: [] });
+        }
+
+        const topicMatch = topic ? buildTopicMatch(topic) : null;
+        const matchStage = topicMatch || {};
+
+        const pipeline = [
+            ...(Object.keys(matchStage).length ? [{ $match: matchStage }] : []),
+            {
+                $lookup: {
+                    from: 'comments',
+                    let: { pid: { $toString: '$_id' } },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$postId', '$$pid'] } } }
+                    ],
+                    as: 'commentDocs'
+                }
+            },
+            {
+                $addFields: {
+                    commentCount: { $size: '$commentDocs' },
+                    likeCount: { $ifNull: ['$likeCount', 0] },
+                    favoriteCount: { $ifNull: ['$favoriteCount', 0] },
+                    popularity: {
+                        $add: [
+                            { $ifNull: ['$likeCount', 0] },
+                            { $ifNull: ['$favoriteCount', 0] },
+                            { $size: '$commentDocs' }
+                        ]
+                    }
+                }
+            },
+            { $sort: sort === 'popular' ? { popularity: -1, createdAt: -1 } : { createdAt: -1 } },
+            { $project: { commentDocs: 0 } }
+        ];
+
+        const posts = await Post.aggregate(pipeline);
         res.status(200).json({ data: posts });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// 8. Blog Yazısı Silme
+app.get('/api/users/:id/favorites', async (req, res) => {
+    try {
+        const uid = req.params.id;
+        const pipeline = [
+            { $match: { favoritedBy: uid } },
+            {
+                $lookup: {
+                    from: 'comments',
+                    let: { pid: { $toString: '$_id' } },
+                    pipeline: [{ $match: { $expr: { $eq: ['$postId', '$$pid'] } } }],
+                    as: 'commentDocs'
+                }
+            },
+            {
+                $addFields: {
+                    commentCount: { $size: '$commentDocs' },
+                    likeCount: { $ifNull: ['$likeCount', 0] },
+                    favoriteCount: { $ifNull: ['$favoriteCount', 0] }
+                }
+            },
+            { $sort: { createdAt: -1 } },
+            { $project: { commentDocs: 0 } }
+        ];
+        const posts = await Post.aggregate(pipeline);
+        res.status(200).json({ data: posts });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/posts/:id', async (req, res) => {
+    try {
+        const { title, content, category, authorId } = req.body;
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Yazı bulunamadı.' });
+        if (!authorId || post.authorId !== authorId) {
+            return res.status(403).json({ message: 'Bu yazıyı düzenleme yetkiniz yok.' });
+        }
+        if (title !== undefined) post.title = title;
+        if (content !== undefined) post.content = content;
+        if (category !== undefined) post.category = category;
+        await post.save();
+        res.status(200).json({ message: 'Güncellendi', post });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/posts/:id/react', async (req, res) => {
+    try {
+        const { userId, action } = req.body;
+        if (!userId || !['like', 'favorite'].includes(action)) {
+            return res.status(400).json({ message: 'userId ve action (like|favorite) gerekli.' });
+        }
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Yazı bulunamadı.' });
+
+        const listField = action === 'like' ? 'likedBy' : 'favoritedBy';
+        const countField = action === 'like' ? 'likeCount' : 'favoriteCount';
+        const arr = post[listField] || [];
+        if (arr.includes(userId)) {
+            return res.status(200).json({ message: 'Zaten işaretli.', post: post.toObject ? post.toObject() : post });
+        }
+        post[listField] = [...arr, userId];
+        post[countField] = (post[countField] || 0) + 1;
+        await post.save();
+        res.status(200).json({ message: 'Tamam', post });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 8. Blog Yazısı Silme (yalnızca yazar)
 app.delete('/api/posts/:id', async (req, res) => {
     try {
+        const authorId = req.query.authorId;
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Yazı bulunamadı.' });
+        if (!authorId || post.authorId !== authorId) {
+            return res.status(403).json({ message: 'Bu yazıyı silme yetkiniz yok.' });
+        }
         await Post.findByIdAndDelete(req.params.id);
         res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/posts/:id/comments', async (req, res) => {
+    try {
+        const comments = await Comment.find({ postId: req.params.id }).sort({ createdAt: -1 });
+        res.status(200).json({ data: comments });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

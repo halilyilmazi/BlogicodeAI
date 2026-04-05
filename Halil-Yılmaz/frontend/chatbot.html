@@ -114,7 +114,9 @@
     <div class="navbar">
         <h1>BlogicodeAI Asistanı 🤖</h1>
         <div class="nav-buttons">
-            <button onclick="window.location.href='home.html'">Ana Sayfaya Dön</button>
+            <button onclick="window.location.href='index.html'">Keşfet</button>
+            <button onclick="window.location.href='panel.html'">Panelim</button>
+            <button onclick="window.location.href='home.html'">Yeni yazı</button>
         </div>
     </div>
 
@@ -131,8 +133,9 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        const apiUrl = window.BLOGICODE_API_BASE;
         
         // Giriş kontrolü
         if (!localStorage.getItem('userId')) {

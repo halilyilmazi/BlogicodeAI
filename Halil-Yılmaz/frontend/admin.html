@@ -42,8 +42,9 @@
         </table>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        const apiUrl = window.BLOGICODE_API_BASE;
 
         window.onload = async () => {
             const tableBody = document.getElementById('userTableBody');

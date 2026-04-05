@@ -3,148 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlogicodeAI | Profil Ayarları</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; margin: 0; }
-        .navbar { background-color: #1877f2; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .navbar button { background: white; color: #1877f2; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
-        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
-        .btn-update { background-color: #4CAF50; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .btn-delete { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; margin-top: 30px; }
-        #msg { text-align: center; font-weight: bold; margin-top: 15px; }
-        .profile-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 20px; border: 3px solid #1877f2; }
-    </style>
+    <title>BlogicodeAI | Profil</title>
+    <script>
+        (function () {
+            var id = localStorage.getItem('userId');
+            window.location.replace(id ? 'panel.html#profil' : 'index.html');
+        })();
+    </script>
+    <meta http-equiv="refresh" content="0;url=panel.html#profil">
 </head>
 <body>
-
-    <div class="navbar">
-        <h1>Profil Ayarları</h1>
-        <button onclick="window.location.href='home.html'">Ana Sayfaya Dön</button>
-    </div>
-
-    <div class="container">
-        <img id="imgPreview" src="https://via.placeholder.com/100" class="profile-preview" alt="Profil">
-        
-        <div class="form-group">
-            <label>Profil Fotoğrafı URL</label>
-            <input type="text" id="profilePhoto" placeholder="Resim linkini yapıştırın" oninput="document.getElementById('imgPreview').src=this.value">
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;">
-                <label>Ad</label>
-                <input type="text" id="firstName">
-            </div>
-            <div class="form-group" style="flex: 1;">
-                <label>Soyad</label>
-                <input type="text" id="lastName">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Kullanıcı Adı</label>
-            <input type="text" id="username" placeholder="@halilyilmaz">
-        </div>
-
-        <div class="form-group">
-            <label>Meslek</label>
-            <input type="text" id="profession" placeholder="Yazılım Geliştirici">
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;">
-                <label>Cinsiyet</label>
-                <select id="gender">
-                    <option value="">Seçiniz</option>
-                    <option value="Erkek">Erkek</option>
-                    <option value="Kadın">Kadın</option>
-                    <option value="Belirtmek İstemiyorum">Belirtmek İstemiyorum</option>
-                </select>
-            </div>
-            <div class="form-group" style="flex: 1;">
-                <label>Doğum Tarihi</label>
-                <input type="date" id="birthDate">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Hakkımda (Bio)</label>
-            <textarea id="bio" rows="3" placeholder="Kendinizden bahsedin..."></textarea>
-        </div>
-        
-        <button class="btn-update" onclick="profilGuncelle()">Değişiklikleri Kaydet</button>
-        <p id="msg"></p>
-        
-        <button class="btn-delete" onclick="hesapSil()">Hesabımı Sil</button>
-    </div>
-
-    <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
-        const userId = localStorage.getItem('userId');
-
-        if (!userId) window.location.href = 'login.html';
-
-        // Mevcut verileri çek ve kutuları doldur
-        window.onload = async () => {
-            try {
-                const res = await fetch(apiUrl + '/users/' + userId);
-                const user = await res.json();
-                
-                if(user) {
-                    document.getElementById('firstName').value = user.firstName || '';
-                    document.getElementById('lastName').value = user.lastName || '';
-                    document.getElementById('username').value = user.username || '';
-                    document.getElementById('profession').value = user.profession || '';
-                    document.getElementById('gender').value = user.gender || '';
-                    document.getElementById('birthDate').value = user.birthDate || '';
-                    document.getElementById('bio').value = user.bio || '';
-                    document.getElementById('profilePhoto').value = user.profilePhoto || '';
-                    if(user.profilePhoto) document.getElementById('imgPreview').src = user.profilePhoto;
-                }
-            } catch (error) { console.error(error); }
-        };
-
-        async function profilGuncelle() {
-            const msg = document.getElementById('msg');
-            msg.innerText = "Kaydediliyor...";
-            
-            const updateData = {
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                username: document.getElementById('username').value,
-                profession: document.getElementById('profession').value,
-                gender: document.getElementById('gender').value,
-                birthDate: document.getElementById('birthDate').value,
-                bio: document.getElementById('bio').value,
-                profilePhoto: document.getElementById('profilePhoto').value
-            };
-
-            try {
-                const res = await fetch(apiUrl + '/users/' + userId, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updateData)
-                });
-                if(res.ok) {
-                    msg.style.color = "green";
-                    msg.innerText = "Profil başarıyla güncellendi! ✅";
-                }
-            } catch (error) { 
-                msg.style.color = "red";
-                msg.innerText = "Güncelleme sırasında hata oluştu.";
-            }
-        }
-
-        async function hesapSil() {
-            if(confirm("Emin misin? Bu işlem geri alınamaz!")) {
-                await fetch(apiUrl + '/users/' + userId, { method: 'DELETE' });
-                localStorage.clear();
-                window.location.href = 'index.html';
-            }
-        }
-    </script>
+    <p>Yönlendiriliyor… <a href="panel.html#profil">Kullanıcı paneli</a></p>
 </body>
 </html>

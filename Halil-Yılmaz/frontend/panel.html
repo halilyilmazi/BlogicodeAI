@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlogicodeAI | Kullanıcı Paneli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'DM Sans', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+            padding: 14px 24px; background: #1e293b; border-bottom: 1px solid #334155;
+        }
+        .topbar h1 { margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.25rem; }
+        .topbar a { color: #93c5fd; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .topbar a:hover { text-decoration: underline; }
+        .topbar-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn { padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; }
+        .btn-ghost { background: #334155; color: #e2e8f0; }
+        .btn-ghost:hover { background: #475569; }
+        .btn-primary { background: linear-gradient(100deg, #3b82f6, #6366f1); color: white; }
+        .tabs { display: flex; gap: 6px; padding: 0 24px; margin-top: 20px; border-bottom: 1px solid #334155; flex-wrap: wrap; }
+        .tabs button {
+            padding: 12px 18px; border: none; background: transparent; color: #94a3b8;
+            font-weight: 600; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; margin-bottom: -1px;
+        }
+        .tabs button.active { color: #93c5fd; border-bottom-color: #3b82f6; }
+        main { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+        section.panel-section { display: none; }
+        section.panel-section.active { display: block; }
+        .cat-group { margin-bottom: 28px; }
+        .cat-group h3 { font-family: 'Outfit', sans-serif; color: #60a5fa; font-size: 1rem; margin: 0 0 12px; }
+        .fav-card {
+            background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+        }
+        .fav-card h4 { margin: 0 0 6px; font-size: 16px; color: #f8fafc; }
+        .fav-card p { margin: 0; font-size: 13px; color: #94a3b8; line-height: 1.5; max-height: 3.2em; overflow: hidden; }
+        .post-row {
+            background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; margin-bottom: 12px;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px;
+        }
+        .post-row h4 { margin: 0 0 6px; font-size: 16px; }
+        .post-row .meta { font-size: 12px; color: #94a3b8; }
+        .post-row-actions { display: flex; gap: 8px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #cbd5e1; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-family: inherit;
+        }
+        .profile-preview { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block; margin-bottom: 16px; border: 2px solid #3b82f6; }
+        #panelMsg { margin-top: 12px; font-weight: 600; min-height: 22px; }
+        .modal-bg {
+            display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); z-index: 500; align-items: center; justify-content: center; padding: 16px;
+        }
+        .modal-bg.open { display: flex; }
+        .modal-box {
+            background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 22px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-box h3 { margin: 0 0 16px; font-family: 'Outfit', sans-serif; }
+        .empty-hint { color: #94a3b8; font-size: 15px; }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <h1>Kullanıcı paneli</h1>
+        <div class="topbar-actions">
+            <a href="index.html">Keşfet</a>
+            <button type="button" class="btn btn-primary" onclick="location.href='home.html'">Yeni yazı paylaş</button>
+            <button type="button" class="btn btn-ghost" onclick="cikis()">Çıkış</button>
+        </div>
+    </header>
+    <nav class="tabs" role="tablist">
+        <button type="button" class="active" data-section="fav" role="tab">Favorilerim</button>
+        <button type="button" data-section="posts" role="tab">Yazılarım</button>
+        <button type="button" data-section="profil" role="tab">Profil bilgilerim</button>
+    </nav>
+    <main>
+        <section id="sec-fav" class="panel-section active" aria-labelledby="tab-fav">
+            <div id="favContainer"><p class="empty-hint">Yükleniyor...</p></div>
+        </section>
+        <section id="sec-posts" class="panel-section" aria-labelledby="tab-posts">
+            <div id="myPostsContainer"><p class="empty-hint">Yükleniyor...</p></div>
+        </section>
+        <section id="sec-profil" class="panel-section" aria-labelledby="tab-profil">
+            <img id="imgPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" class="profile-preview" alt="Önizleme">
+            <div class="form-group">
+                <label>Profil fotoğrafı URL</label>
+                <input type="text" id="profilePhoto" placeholder="Resim adresi" oninput="document.getElementById('imgPreview').src=this.value || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'">
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <div class="form-group" style="flex:1;min-width:140px;">
+                    <label>Ad</label>
+                    <input type="text" id="firstName">
+                </div>
+                <div class="form-group" style="flex:1;min-width:140px;">
+                    <label>Soyad</label>
+                    <input type="text" id="lastName">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Kullanıcı adı</label>
+                <input type="text" id="username" placeholder="@kullanici">
+            </div>
+            <div class="form-group">
+                <label>Meslek</label>
+                <input type="text" id="profession">
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <div class="form-group" style="flex:1;min-width:140px;">
+                    <label>Cinsiyet</label>
+                    <select id="gender">
+                        <option value="">Seçiniz</option>
+                        <option value="Erkek">Erkek</option>
+                        <option value="Kadın">Kadın</option>
+                        <option value="Belirtmek İstemiyorum">Belirtmek İstemiyorum</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;min-width:140px;">
+                    <label>Doğum tarihi</label>
+                    <input type="date" id="birthDate">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Hakkımda</label>
+                <textarea id="bio" rows="3"></textarea>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="profilKaydet()">Kaydet</button>
+            <p id="panelMsg"></p>
+            <button type="button" class="btn btn-ghost" style="margin-top:24px;width:100%;color:#f87171;border-color:#7f1d1d;" onclick="hesapSil()">Hesabımı sil</button>
+        </section>
+    </main>
+
+    <div id="editModal" class="modal-bg" aria-hidden="true">
+        <div class="modal-box">
+            <h3>Yazıyı düzenle</h3>
+            <input type="hidden" id="editPostId">
+            <div class="form-group">
+                <label>Başlık</label>
+                <input type="text" id="editTitle">
+            </div>
+            <div class="form-group">
+                <label>Kategori</label>
+                <input type="text" id="editCategory">
+            </div>
+            <div class="form-group">
+                <label>İçerik</label>
+                <textarea id="editContent" rows="8"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary" onclick="yaziGuncelleKaydet()">Kaydet</button>
+                <button type="button" class="btn btn-ghost" onclick="closeEditModal()">İptal</button>
+            </div>
+            <p id="editMsg" style="margin-top:10px;font-weight:600;"></p>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const apiUrl = window.BLOGICODE_API_BASE;
+        const userId = localStorage.getItem('userId');
+        if (!userId) window.location.href = 'index.html';
+
+        document.querySelectorAll('.tabs button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tabs button').forEach((b) => b.classList.remove('active'));
+                document.querySelectorAll('.panel-section').forEach((s) => s.classList.remove('active'));
+                btn.classList.add('active');
+                const id = 'sec-' + btn.dataset.section;
+                const el = document.getElementById(id);
+                if (el) el.classList.add('active');
+                history.replaceState(null, '', '#' + btn.dataset.section);
+            });
+        });
+
+        function applyHash() {
+            const h = (location.hash || '#fav').slice(1);
+            const map = { fav: 'fav', posts: 'posts', profil: 'profil' };
+            const key = map[h] || 'fav';
+            const tab = document.querySelector('.tabs button[data-section="' + key + '"]');
+            if (tab) tab.click();
+        }
+
+        async function loadFavorites() {
+            const box = document.getElementById('favContainer');
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId + '/favorites');
+                const json = await res.json();
+                const posts = json.data || [];
+                if (!posts.length) {
+                    box.innerHTML = '<p class="empty-hint">Henüz favoriye eklediğin yazı yok. Keşfet sayfasından ⭐ ile ekleyebilirsin.</p>';
+                    return;
+                }
+                const byCat = {};
+                posts.forEach((p) => {
+                    const c = (p.category && p.category.trim()) ? p.category.trim() : 'Genel';
+                    if (!byCat[c]) byCat[c] = [];
+                    byCat[c].push(p);
+                });
+                const cats = Object.keys(byCat).sort((a, b) => a.localeCompare(b, 'tr'));
+                box.innerHTML = cats.map((cat) => {
+                    const items = byCat[cat].map((p) => `
+                        <div class="fav-card">
+                            <h4>${escapeHtml(p.title)}</h4>
+                            <p>${escapeHtml(p.content)}</p>
+                        </div>
+                    `).join('');
+                    return `<div class="cat-group"><h3>${escapeHtml(cat)}</h3>${items}</div>`;
+                }).join('');
+            } catch (e) {
+                box.innerHTML = '<p class="empty-hint" style="color:#f87171;">Favoriler yüklenemedi.</p>';
+            }
+        }
+
+        async function loadMyPosts() {
+            const box = document.getElementById('myPostsContainer');
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId);
+                const data = await res.json();
+                const posts = data.posts || [];
+                if (!posts.length) {
+                    box.innerHTML = '<p class="empty-hint">Henüz yazın yok. «Yeni yazı paylaş» ile başlayabilirsin.</p>';
+                    return;
+                }
+                box.innerHTML = posts.map((p) => {
+                    const d = new Date(p.createdAt).toLocaleDateString('tr-TR');
+                    return `
+                        <div class="post-row" id="row-${p._id}">
+                            <div>
+                                <h4>${escapeHtml(p.title)}</h4>
+                                <div class="meta">${escapeHtml(p.category || 'Genel')} · ${d}</div>
+                            </div>
+                            <div class="post-row-actions">
+                                <button type="button" class="btn btn-ghost" onclick="openEditModal('${p._id}')">Düzenle</button>
+                                <button type="button" class="btn btn-ghost" style="color:#f87171;" onclick="silYazi('${p._id}')">Sil</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                box.innerHTML = '<p class="empty-hint" style="color:#f87171;">Yazılar yüklenemedi.</p>';
+            }
+        }
+
+        async function openEditModal(id) {
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId);
+                const data = await res.json();
+                const posts = data.posts || [];
+                const p = posts.find((x) => x._id === id);
+                if (!p) return;
+                document.getElementById('editPostId').value = id;
+                document.getElementById('editTitle').value = p.title || '';
+                document.getElementById('editCategory').value = p.category || '';
+                document.getElementById('editContent').value = p.content || '';
+                document.getElementById('editMsg').textContent = '';
+                document.getElementById('editModal').classList.add('open');
+            } catch (e) {
+                alert('Yazı bilgisi alınamadı.');
+            }
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('open');
+        }
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') closeEditModal();
+        });
+
+        async function yaziGuncelleKaydet() {
+            const id = document.getElementById('editPostId').value;
+            const msg = document.getElementById('editMsg');
+            msg.textContent = 'Kaydediliyor...';
+            msg.style.color = '#94a3b8';
+            try {
+                const res = await fetch(apiUrl + '/posts/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: document.getElementById('editTitle').value,
+                        category: document.getElementById('editCategory').value,
+                        content: document.getElementById('editContent').value,
+                        authorId: userId
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    msg.style.color = '#4ade80';
+                    msg.textContent = 'Güncellendi.';
+                    closeEditModal();
+                    loadMyPosts();
+                } else {
+                    msg.style.color = '#f87171';
+                    msg.textContent = data.message || 'Kaydedilemedi.';
+                }
+            } catch (e) {
+                msg.style.color = '#f87171';
+                msg.textContent = 'Bağlantı hatası.';
+            }
+        }
+
+        async function silYazi(id) {
+            if (!confirm('Bu yazıyı silmek istediğine emin misin?')) return;
+            try {
+                const res = await fetch(apiUrl + '/posts/' + id + '?authorId=' + encodeURIComponent(userId), { method: 'DELETE' });
+                if (res.ok || res.status === 204) {
+                    const row = document.getElementById('row-' + id);
+                    if (row) row.remove();
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.message || 'Silinemedi.');
+                }
+            } catch (e) {
+                alert('Sunucu hatası.');
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId);
+                const data = await res.json();
+                const u = data.user || data;
+                document.getElementById('firstName').value = u.firstName || '';
+                document.getElementById('lastName').value = u.lastName || '';
+                document.getElementById('username').value = u.username || '';
+                document.getElementById('profession').value = u.profession || '';
+                document.getElementById('gender').value = u.gender || '';
+                document.getElementById('birthDate').value = u.birthDate || '';
+                document.getElementById('bio').value = u.bio || '';
+                document.getElementById('profilePhoto').value = u.profilePhoto || '';
+                const prev = document.getElementById('imgPreview');
+                if (u.profilePhoto) prev.src = u.profilePhoto;
+                else prev.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(userId);
+            } catch (e) { console.error(e); }
+        }
+
+        async function profilKaydet() {
+            const msg = document.getElementById('panelMsg');
+            msg.style.color = '#94a3b8';
+            msg.textContent = 'Kaydediliyor...';
+            const body = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                username: document.getElementById('username').value,
+                profession: document.getElementById('profession').value,
+                gender: document.getElementById('gender').value,
+                birthDate: document.getElementById('birthDate').value,
+                bio: document.getElementById('bio').value,
+                profilePhoto: document.getElementById('profilePhoto').value
+            };
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (res.ok) {
+                    msg.style.color = '#4ade80';
+                    msg.textContent = 'Profil güncellendi.';
+                } else {
+                    msg.style.color = '#f87171';
+                    msg.textContent = 'Güncellenemedi.';
+                }
+            } catch (e) {
+                msg.style.color = '#f87171';
+                msg.textContent = 'Bağlantı hatası.';
+            }
+        }
+
+        async function hesapSil() {
+            if (!confirm('Hesabın kalıcı olarak silinecek. Emin misin?')) return;
+            await fetch(apiUrl + '/users/' + userId, { method: 'DELETE' });
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        function cikis() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userToken');
+            window.location.href = 'index.html';
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        window.addEventListener('hashchange', applyHash);
+        window.onload = () => {
+            loadFavorites();
+            loadMyPosts();
+            loadProfile();
+            applyHash();
+        };
+    </script>
+</body>
+</html>
