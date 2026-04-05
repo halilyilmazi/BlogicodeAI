@@ -1,18 +1,7 @@
-# Halil Yılmaz — Web Frontend (teslim sayfası)
+# Halil Yılmaz — Web Frontend
 
-## YouTube — canlı sitede API + veritabanı kanıtı
+**Video linki : [https://youtu.be/GPNGHeMwLbo](https://youtu.be/GPNGHeMwLbo)
 
-**Video linki (buraya kendi videonu yapıştır):** [YouTube’da aç](https://www.youtube.com/watch?v=VIDEO_ID_BURAYA)
-
-Videoda göster:
-
-- **Domain** üzerinden açılan site (adres çubuğu görünsün).
-- **Kayıt / giriş** (ör. `index.html` modal veya `login.html`).
-- En az bir **yazı** veya **yorum** işlemi; mümkünse **MongoDB Atlas**’ta ilgili koleksiyonda kayıt görüntüleme (ekran kaydı).
-- İsteğe bağlı: **Panel** (`panel.html`), **yeni yazı** (`home.html`), **asistan** (`chatbot.html`).
-
-**Canlı arayüz:** `https://www.blogicodeai.com`  
-**Canlı REST API:** `https://blogicode-ai.vercel.app/api`
 
 ---
 
