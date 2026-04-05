@@ -1,8 +1,6 @@
 # Halil Yılmaz — REST API
 
-## YouTube — Postman + canlı domain kanıtı
-
-**Video linki (buraya kendi videonu yapıştır):** [](https://youtu.be/hFB8fLDNV9o)
+**Video linki (buraya kendi videonu yapıştır):** [https://youtu.be/hFB8fLDNV9o](https://youtu.be/hFB8fLDNV9o)
 
 Videoda göster:
 
