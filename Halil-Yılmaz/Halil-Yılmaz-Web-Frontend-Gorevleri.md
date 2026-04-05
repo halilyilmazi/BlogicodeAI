@@ -1,6 +1,6 @@
 # Halil Yılmaz — Web Frontend
 
-**Video linki : [https://youtu.be/GPNGHeMwLbo](https://youtu.be/GPNGHeMwLbo)
+**Video linki : [https://youtu.be/GPNGHeMwLbo](https://youtu.be/GPNGHeMwLbo)**
 
 
 ---
