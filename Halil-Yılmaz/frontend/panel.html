@@ -3,82 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlogicodeAI | Kullanıcı Paneli</title>
+    <title>BlogicodeAI | Kullanıcı paneli</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'DM Sans', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
-        .topbar {
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-            padding: 14px 24px; background: #1e293b; border-bottom: 1px solid #334155;
-        }
-        .topbar h1 { margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.25rem; }
-        .topbar a { color: #93c5fd; text-decoration: none; font-weight: 600; font-size: 14px; }
-        .topbar a:hover { text-decoration: underline; }
-        .topbar-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .btn { padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; }
-        .btn-ghost { background: #334155; color: #e2e8f0; }
-        .btn-ghost:hover { background: #475569; }
-        .btn-primary { background: linear-gradient(100deg, #3b82f6, #6366f1); color: white; }
-        .tabs { display: flex; gap: 6px; padding: 0 24px; margin-top: 20px; border-bottom: 1px solid #334155; flex-wrap: wrap; }
-        .tabs button {
-            padding: 12px 18px; border: none; background: transparent; color: #94a3b8;
-            font-weight: 600; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; margin-bottom: -1px;
-        }
-        .tabs button.active { color: #93c5fd; border-bottom-color: #3b82f6; }
-        main { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
-        section.panel-section { display: none; }
-        section.panel-section.active { display: block; }
-        .cat-group { margin-bottom: 28px; }
-        .cat-group h3 { font-family: 'Outfit', sans-serif; color: #60a5fa; font-size: 1rem; margin: 0 0 12px; }
-        .fav-card {
-            background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
-        }
-        .fav-card h4 { margin: 0 0 6px; font-size: 16px; color: #f8fafc; }
-        .fav-card p { margin: 0; font-size: 13px; color: #94a3b8; line-height: 1.5; max-height: 3.2em; overflow: hidden; }
-        .post-row {
-            background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px; margin-bottom: 12px;
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px;
-        }
-        .post-row h4 { margin: 0 0 6px; font-size: 16px; }
-        .post-row .meta { font-size: 12px; color: #94a3b8; }
-        .post-row-actions { display: flex; gap: 8px; }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #cbd5e1; font-size: 14px; }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-family: inherit;
-        }
-        .profile-preview { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block; margin-bottom: 16px; border: 2px solid #3b82f6; }
         #panelMsg { margin-top: 12px; font-weight: 600; min-height: 22px; }
-        .modal-bg {
-            display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); z-index: 500; align-items: center; justify-content: center; padding: 16px;
-        }
-        .modal-bg.open { display: flex; }
-        .modal-box {
-            background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 22px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
-        }
-        .modal-box h3 { margin: 0 0 16px; font-family: 'Outfit', sans-serif; }
-        .empty-hint { color: #94a3b8; font-size: 15px; }
     </style>
 </head>
-<body>
-    <header class="topbar">
-        <h1>Kullanıcı paneli</h1>
-        <div class="topbar-actions">
-            <a href="index.html">Keşfet</a>
-            <button type="button" class="btn btn-primary" onclick="location.href='home.html'">Yeni yazı paylaş</button>
-            <button type="button" class="btn btn-ghost" onclick="cikis()">Çıkış</button>
+<body class="theme-body">
+    <header class="theme-navbar">
+        <div class="sky-layer" aria-hidden="true">
+            <div class="stars"></div>
+            <div class="twinkle"></div>
+            <span class="plane" aria-hidden="true">✈</span>
+            <span class="plane" aria-hidden="true">✈</span>
+            <span class="plane" aria-hidden="true">✈</span>
+        </div>
+        <div class="navbar-inner">
+            <div class="nav-left">
+                <a href="index.html" class="brand-link">
+                    <div class="brand-block">
+                        <p class="brand-title">BlogicodeAI</p>
+                        <p class="brand-sub">Kullanıcı paneli</p>
+                    </div>
+                </a>
+            </div>
+            <nav class="nav-actions" aria-label="Üst menü">
+                <a href="index.html" class="btn-nav">Keşfet</a>
+                <a href="chatbot.html" class="btn-nav btn-nav-assistant">
+                    <img src="robot-celik.svg" alt="" class="nav-robot-icon" width="22" height="22">
+                    Asistan
+                </a>
+                <button type="button" class="btn-nav btn-nav-primary" onclick="location.href='home.html'">Yeni yazı</button>
+                <button type="button" class="btn-nav" onclick="cikis()">Çıkış</button>
+            </nav>
         </div>
     </header>
-    <nav class="tabs" role="tablist">
+    <nav class="theme-tabs" role="tablist">
         <button type="button" class="active" data-section="fav" role="tab">Favorilerim</button>
         <button type="button" data-section="posts" role="tab">Yazılarım</button>
         <button type="button" data-section="comments" role="tab">Yorumlarım</button>
         <button type="button" data-section="profil" role="tab">Profil bilgilerim</button>
     </nav>
-    <main>
+    <main class="theme-main">
         <section id="sec-fav" class="panel-section active" aria-labelledby="tab-fav">
             <div id="favContainer"><p class="empty-hint">Yükleniyor...</p></div>
         </section>
@@ -141,7 +110,7 @@
             </div>
             <button type="button" class="btn btn-primary" onclick="profilKaydet()">Kaydet</button>
             <p id="panelMsg"></p>
-            <button type="button" class="btn btn-ghost" style="margin-top:24px;width:100%;color:#f87171;border-color:#7f1d1d;" onclick="openDeleteAccountModal()">Hesabımı sil</button>
+            <button type="button" class="btn btn-ghost btn-danger-ghost" style="margin-top:24px;width:100%;" onclick="openDeleteAccountModal()">Hesabımı sil</button>
         </section>
     </main>
 
@@ -189,14 +158,15 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-       const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        const apiUrl = window.BLOGICODE_API_BASE;
         const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/notionists-neutral/svg?seed=blogicode-unisex';
         const userId = localStorage.getItem('userId');
         if (!userId) window.location.href = 'index.html';
 
         function goPanelTab(section) {
-            const tab = document.querySelector('.tabs button[data-section="' + section + '"]');
+            const tab = document.querySelector('.theme-tabs button[data-section="' + section + '"]');
             if (tab) tab.click();
         }
 
@@ -221,9 +191,9 @@
             r.readAsDataURL(f);
         });
 
-        document.querySelectorAll('.tabs button').forEach((btn) => {
+        document.querySelectorAll('.theme-tabs button').forEach((btn) => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.tabs button').forEach((b) => b.classList.remove('active'));
+                document.querySelectorAll('.theme-tabs button').forEach((b) => b.classList.remove('active'));
                 document.querySelectorAll('.panel-section').forEach((s) => s.classList.remove('active'));
                 btn.classList.add('active');
                 const id = 'sec-' + btn.dataset.section;
@@ -238,7 +208,7 @@
             const h = (location.hash || '#fav').slice(1);
             const map = { fav: 'fav', posts: 'posts', comments: 'comments', profil: 'profil' };
             const key = map[h] || 'fav';
-            const tab = document.querySelector('.tabs button[data-section="' + key + '"]');
+            const tab = document.querySelector('.theme-tabs button[data-section="' + key + '"]');
             if (tab) tab.click();
         }
 
@@ -383,7 +353,7 @@
                 const res = await fetch(apiUrl + '/users/' + userId);
                 const data = await res.json();
                 const posts = data.posts || [];
-                const p = posts.find((x) => x._id === id);
+                const p = posts.find((x) => String(x._id) === String(id));
                 if (!p) return;
                 document.getElementById('editPostId').value = id;
                 document.getElementById('editTitle').value = p.title || '';
@@ -513,9 +483,18 @@
 
         async function confirmDeleteAccount() {
             try {
-                await fetch(apiUrl + '/users/' + userId, { method: 'DELETE' });
-            } catch (e) { /* yine de çıkış */ }
+                const res = await fetch(apiUrl + '/users/' + userId, { method: 'DELETE' });
+                if (!res.ok && res.status !== 204) {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.error || data.message || 'Hesap silinemedi. Tekrar dene.');
+                    return;
+                }
+            } catch (e) {
+                alert('Sunucuya ulaşılamadı. İnternetini kontrol et.');
+                return;
+            }
             localStorage.clear();
+            closeDeleteAccountModal();
             window.location.href = 'index.html';
         }
 

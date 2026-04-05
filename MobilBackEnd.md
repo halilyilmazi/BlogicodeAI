@@ -1,6 +1,6 @@
 # Mobil Backend (REST API Bağlantısı) Görev Dağılımı
 
-**REST API Adresi:** [api.yazmuh.com](https://api.blogicodeai.com)
+**REST API Adresi (BlogicodeAI):** `https://blogicode-ai.vercel.app/api`
 
 Bu dokümanda, mobil uygulamanın REST API ile iletişimini sağlayan backend entegrasyon görevleri listelenmektedir. Her grup üyesi, kendisine atanan API endpoint'lerinin mobil uygulamadan çağrılması ve yönetilmesinden sorumludur.
 

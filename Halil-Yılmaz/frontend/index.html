@@ -7,257 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
     <style>
-        :root {
-            --sky-top: #070b2e;
-            --sky-mid: #121a5c;
-            --sky-bottom: #2d3a8c;
-            --star: rgba(255, 255, 255, 0.9);
-        }
-        body { font-family: 'DM Sans', 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; }
-
-        /* Gökyüzü navbar */
-        .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 5000;
-            min-height: 64px;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-            background: linear-gradient(165deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
-            overflow: visible;
-            isolation: isolate;
-        }
-        .navbar-inner {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .nav-search-wrap {
-            flex: 1 1 200px;
-            max-width: 360px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 4;
-        }
-        .nav-search-wrap input[type="search"] {
-            flex: 1;
-            min-width: 0;
-            padding: 9px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(147, 197, 253, 0.35);
-            background: rgba(15, 23, 42, 0.5);
-            color: #e2e8f0;
-            font-family: inherit;
-            font-size: 14px;
-        }
-        .nav-search-wrap input::placeholder { color: #64748b; }
-        .nav-search-wrap input:focus {
-            outline: none;
-            border-color: rgba(147, 197, 253, 0.65);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-        }
-        .nav-search-wrap button {
-            padding: 9px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(147, 197, 253, 0.45);
-            background: rgba(59, 130, 246, 0.35);
-            color: #f8fafc;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            font-family: inherit;
-            white-space: nowrap;
-        }
-        .nav-search-wrap button:hover { background: rgba(59, 130, 246, 0.5); }
-        .sky-layer {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .stars {
-            position: absolute;
-            inset: 0;
-            background-image:
-                radial-gradient(1.5px 1.5px at 10% 20%, var(--star), transparent),
-                radial-gradient(1px 1px at 25% 65%, rgba(255,255,255,0.7), transparent),
-                radial-gradient(1.2px 1.2px at 40% 35%, var(--star), transparent),
-                radial-gradient(1px 1px at 55% 80%, rgba(255,255,255,0.6), transparent),
-                radial-gradient(1.5px 1.5px at 70% 25%, var(--star), transparent),
-                radial-gradient(1px 1px at 82% 55%, rgba(255,255,255,0.75), transparent),
-                radial-gradient(1.2px 1.2px at 90% 15%, var(--star), transparent),
-                radial-gradient(1px 1px at 15% 45%, rgba(255,255,255,0.5), transparent),
-                radial-gradient(1.5px 1.5px at 33% 88%, var(--star), transparent),
-                radial-gradient(1px 1px at 48% 12%, rgba(255,255,255,0.65), transparent),
-                radial-gradient(1.2px 1.2px at 62% 48%, var(--star), transparent),
-                radial-gradient(1px 1px at 76% 72%, rgba(255,255,255,0.55), transparent),
-                radial-gradient(1.5px 1.5px at 88% 38%, var(--star), transparent),
-                radial-gradient(1px 1px at 5% 75%, rgba(255,255,255,0.5), transparent),
-                radial-gradient(1.2px 1.2px at 95% 90%, var(--star), transparent);
-            opacity: 0.95;
-        }
-        .twinkle {
-            position: absolute;
-            inset: 0;
-            background-image:
-                radial-gradient(1px 1px at 22% 30%, rgba(255,255,255,0.3), transparent),
-                radial-gradient(1px 1px at 66% 60%, rgba(255,255,255,0.25), transparent);
-            animation: twinkle 4s ease-in-out infinite alternate;
-        }
-        @keyframes twinkle {
-            from { opacity: 0.4; }
-            to { opacity: 1; }
-        }
-        .plane {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 17px;
-            filter: drop-shadow(0 0 6px rgba(147, 197, 253, 0.6));
-            animation: fly-plane 18s linear infinite;
-            top: 42%;
-            left: -40px;
-        }
-        .plane:nth-child(4) {
-            top: 68%;
-            font-size: 13px;
-            opacity: 0.75;
-            animation-duration: 26s;
-            animation-delay: -8s;
-        }
-        .plane:nth-child(5) {
-            top: 22%;
-            font-size: 15px;
-            opacity: 0.65;
-            animation-duration: 32s;
-            animation-delay: -14s;
-        }
-        @keyframes fly-plane {
-            0% { transform: translateX(0) translateY(0) rotate(12deg) scaleX(-1); }
-            50% { transform: translateX(50vw) translateY(-6px) rotate(10deg) scaleX(-1); }
-            100% { transform: translateX(calc(100vw + 60px)) translateY(4px) rotate(14deg) scaleX(-1); }
-        }
-
-        .brand-block { display: flex; flex-direction: column; gap: 2px; z-index: 3; }
-        .brand-title {
-            margin: 0;
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.35rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            background: linear-gradient(100deg, #93c5fd 0%, #c4b5fd 45%, #f0abfc 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .brand-sub {
-            margin: 0;
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.72rem;
-            font-weight: 400;
-            color: rgba(226, 232, 240, 0.75);
-            letter-spacing: 0.04em;
-        }
-
-        .nav-left { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; z-index: 3; }
-        .nav-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; z-index: 3; }
-
-        .nav-dropdown { position: relative; z-index: 6000; }
-        .nav-dd-btn {
-            background: rgba(15, 23, 42, 0.35);
-            border: 1px solid rgba(147, 197, 253, 0.35);
-            color: #e2e8f0;
-            padding: 9px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: inherit;
-            backdrop-filter: blur(8px);
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .nav-dd-btn:hover { background: rgba(59, 130, 246, 0.25); border-color: rgba(147, 197, 253, 0.55); }
-        .nav-dd-panel {
-            display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            min-width: 260px;
-            max-height: 320px;
-            overflow-y: auto;
-            background: rgba(15, 23, 42, 0.96);
-            border: 1px solid rgba(71, 85, 105, 0.6);
-            border-radius: 12px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-            padding: 8px 0;
-            z-index: 8000;
-        }
-        .nav-dropdown:hover .nav-dd-panel { display: block; }
-        .nav-dd-panel button {
-            display: block;
-            width: 100%;
-            text-align: left;
-            padding: 10px 16px;
-            border: none;
-            background: transparent;
-            color: #e2e8f0;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .nav-dd-panel button:hover { background: rgba(59, 130, 246, 0.2); color: #fff; }
-        .nav-dd-hint { padding: 8px 16px 4px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
-
-        .btn-nav {
-            background: rgba(15, 23, 42, 0.35);
-            border: 1px solid rgba(147, 197, 253, 0.35);
-            color: #e2e8f0;
-            padding: 9px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: inherit;
-            backdrop-filter: blur(8px);
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-        }
-        .btn-nav:hover { transform: translateY(-1px); border-color: rgba(147, 197, 253, 0.6); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25); }
-        .btn-nav-primary {
-            background: linear-gradient(100deg, #3b82f6, #6366f1);
-            border-color: transparent;
-            color: white;
-        }
-        .btn-nav-primary:hover { box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45); }
-
-        .btn-nav-assistant {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .nav-robot-icon {
-            width: 22px;
-            height: 22px;
-            flex-shrink: 0;
-            filter: drop-shadow(0 0 4px rgba(147, 197, 253, 0.5));
-        }
-
-        .profile-pic { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(147, 197, 253, 0.7); cursor: pointer; transition: 0.3s; }
-        .profile-pic:hover { transform: scale(1.06); box-shadow: 0 0 14px rgba(59, 130, 246, 0.5); }
-        .nav-dropdown.align-end .nav-dd-panel { left: auto; right: 0; min-width: 220px; }
-        .user-dd-trigger { display: flex; align-items: center; gap: 8px; }
-        .user-dd-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(147, 197, 253, 0.65); }
-
         /* Toast */
         .toast {
             position: fixed;
@@ -480,7 +231,7 @@
 </head>
 <body>
 
-    <div class="navbar">
+    <div class="theme-navbar">
         <div class="sky-layer" aria-hidden="true">
             <div class="stars"></div>
             <div class="twinkle"></div>
@@ -606,8 +357,9 @@
         </div>
     </footer>
 
+    <script src="config.js"></script>
     <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        const apiUrl = window.BLOGICODE_API_BASE;
         const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/notionists-neutral/svg?seed=blogicode-unisex';
         let userId = localStorage.getItem('userId');
         const navActions = document.getElementById('navActions');
@@ -768,6 +520,11 @@
                 messageText.textContent = 'Lütfen e-posta ve şifre girin.';
                 return;
             }
+            if (!modalLoginMode && (!String(firstName).trim() || !String(lastName).trim())) {
+                messageText.style.color = '#f87171';
+                messageText.textContent = 'Kayıt için ad ve soyad zorunlu.';
+                return;
+            }
             messageText.style.color = '#94a3b8';
             messageText.textContent = 'İşlem yapılıyor...';
 
@@ -775,7 +532,7 @@
                 const endpoint = modalLoginMode ? '/auth/login' : '/auth/register';
                 const bodyData = modalLoginMode
                     ? { email, password }
-                    : { firstName, lastName, email, password };
+                    : { firstName: String(firstName).trim(), lastName: String(lastName).trim(), email, password };
 
                 const response = await fetch(apiUrl + endpoint, {
                     method: 'POST',
@@ -789,7 +546,7 @@
                     if (modalLoginMode) {
                         messageText.textContent = 'Giriş başarılı!';
                         localStorage.setItem('userToken', data.token);
-                        localStorage.setItem('userId', data.user._id);
+                        localStorage.setItem('userId', String(data.user._id));
                         closeAuthModal();
                         renderNav().catch(() => {});
                         loadPosts();

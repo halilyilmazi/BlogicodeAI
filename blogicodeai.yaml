@@ -14,10 +14,10 @@ info:
   contact:
     name: Halil Yılmaz
     email: ylmzyzlm@gmail.com
-    url: https://api.blogicodeai.com/support
+    url: https://blogicode-ai.vercel.app
 
 servers:
-  - url: https://api.blogicodeai.com/api
+  - url: https://blogicode-ai.vercel.app/api
     description: Production server
   - url: http://localhost:3000/api
     description: Development server

@@ -3,82 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlogicodeAI | Yönetici Paneli</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #212529; color: white; margin: 0; }
-        .navbar { background-color: #343a40; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1877f2; }
-        .navbar button { background: #1877f2; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 15px; }
-        table { width: 100%; border-collapse: collapse; background: #343a40; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #495057; }
-        th { background-color: #1877f2; color: white; }
-        tr:hover { background-color: #495057; }
-        .badge { background: #28a745; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
-        .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-    </style>
+    <title>BlogicodeAI | Yönetici</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
 </head>
-<body>
+<body class="theme-body">
 
-    <div class="navbar">
-        <h1>🛡️ Sistem Kontrol Merkezi</h1>
-        <button onclick="window.location.href='home.html'">Ana Sayfaya Dön</button>
-    </div>
+    <header class="theme-navbar">
+        <div class="sky-layer" aria-hidden="true">
+            <div class="stars"></div>
+            <div class="twinkle"></div>
+            <span class="plane" aria-hidden="true">✈</span>
+            <span class="plane" aria-hidden="true">✈</span>
+            <span class="plane" aria-hidden="true">✈</span>
+        </div>
+        <div class="navbar-inner">
+            <div class="nav-left">
+                <a href="index.html" class="brand-link">
+                    <div class="brand-block">
+                        <p class="brand-title">Yönetici</p>
+                        <p class="brand-sub">Kullanıcı listesi</p>
+                    </div>
+                </a>
+            </div>
+            <nav class="nav-actions">
+                <a href="index.html" class="btn-nav">Keşfet</a>
+                <a href="home.html" class="btn-nav btn-nav-primary">Yeni yazı</a>
+            </nav>
+        </div>
+    </header>
 
-    <div class="container">
-        <h2>Kayıtlı Kullanıcılar</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Kullanıcı Adı</th>
-                    <th>Ad Soyad</th>
-                    <th>E-Posta</th>
-                    <th>Kayıt Tarihi</th>
-                    <th>İşlem</th>
-                </tr>
-            </thead>
-            <tbody id="userTableBody">
-                <tr><td colspan="5">Kullanıcılar yükleniyor...</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <main class="theme-main theme-main--wide">
+        <h1 class="theme-page-title">Kayıtlı kullanıcılar</h1>
+        <p class="theme-page-sub">Dikkat: silinen kullanıcı geri alınamaz.</p>
 
+        <div class="theme-table-wrap">
+            <table class="theme-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı adı</th>
+                        <th>Ad soyad</th>
+                        <th>E-posta</th>
+                        <th>Kayıt</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <tr><td colspan="5" class="empty-hint">Yükleniyor…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
     <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
+        const apiUrl = window.BLOGICODE_API_BASE;
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
 
         window.onload = async () => {
             const tableBody = document.getElementById('userTableBody');
             try {
                 const res = await fetch(apiUrl + '/users');
                 const users = await res.json();
-                
-                tableBody.innerHTML = ''; // Yükleniyor yazısını sil
+
+                tableBody.innerHTML = '';
+
+                if (!Array.isArray(users) || users.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="empty-hint">Kayıtlı kullanıcı yok.</td></tr>';
+                    return;
+                }
 
                 users.forEach(user => {
                     const date = new Date(user.createdAt).toLocaleDateString('tr-TR');
                     tableBody.innerHTML += `
                         <tr id="user-${user._id}">
-                            <td><strong>${user.username || 'Belirtilmedi'}</strong></td>
-                            <td>${user.firstName} ${user.lastName}</td>
-                            <td>${user.email}</td>
-                            <td><span class="badge">${date}</span></td>
-                            <td><button class="delete-btn" onclick="kullaniciSil('${user._id}')">Kov (Sil)</button></td>
+                            <td><strong>${escapeHtml(user.username || '—')}</strong></td>
+                            <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+                            <td>${escapeHtml(user.email)}</td>
+                            <td><span class="theme-badge">${escapeHtml(date)}</span></td>
+                            <td><button type="button" class="btn-sm-danger" onclick="kullaniciSil('${user._id}')">Sil</button></td>
                         </tr>
                     `;
                 });
             } catch (error) {
-                tableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Veriler çekilemedi!</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" style="color:#f87171;">Veriler çekilemedi.</td></tr>';
             }
         };
 
         async function kullaniciSil(id) {
-            if(confirm("Bu kullanıcıyı sistemden sonsuza dek silmek istiyor musun?")) {
-                try {
-                    await fetch(apiUrl + '/users/' + id, { method: 'DELETE' });
-                    document.getElementById('user-' + id).remove();
-                    alert("Kullanıcı sistemden temizlendi!");
-                } catch (error) {
-                    alert("Silme işlemi başarısız.");
-                }
+            if (!confirm('Bu kullanıcıyı kalıcı olarak silmek istiyor musun?')) return;
+            try {
+                await fetch(apiUrl + '/users/' + id, { method: 'DELETE' });
+                const row = document.getElementById('user-' + id);
+                if (row) row.remove();
+                alert('Kullanıcı silindi.');
+            } catch (error) {
+                alert('Silme işlemi başarısız.');
             }
         }
     </script>

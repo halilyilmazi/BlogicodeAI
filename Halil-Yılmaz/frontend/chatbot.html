@@ -4,148 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlogicodeAI | Asistan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        /* Üst Menü */
-        .navbar {
-            background-color: #1877f2;
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .navbar h1 { margin: 0; font-size: 20px; }
-        .nav-buttons button {
-            background-color: white;
-            color: #1877f2;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: bold;
+        .theme-chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .theme-chat-suggestions button {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(147, 197, 253, 0.35);
+            background: rgba(15, 23, 42, 0.6);
+            color: #e2e8f0;
+            font-size: 13px;
+            font-family: inherit;
             cursor: pointer;
-            margin-left: 10px;
-            transition: background 0.3s;
+            transition: border-color 0.2s, background 0.2s;
         }
-        .nav-buttons button:hover { background-color: #e4e6eb; }
-        
-        /* Sohbet Ekranı */
-        .chat-container {
+        .theme-chat-suggestions button:hover {
+            border-color: rgba(147, 197, 253, 0.55);
+            background: rgba(59, 130, 246, 0.2);
+        }
+        .theme-chat-toolbar { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+        .theme-chat-toolbar button {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .theme-chat-toolbar button:hover { color: #e2e8f0; border-color: #64748b; }
+        .theme-chat-input-row textarea {
             flex: 1;
-            max-width: 800px;
-            width: 100%;
-            margin: 20px auto;
-            background: white;
+            min-height: 44px;
+            max-height: 160px;
+            resize: vertical;
+            padding: 10px 12px;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: 14px;
         }
-        .chat-box {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background-color: #e5ddd5; /* WhatsApp arka plan rengi */
-        }
-        .message {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            margin-bottom: 15px;
+        .theme-chat-input-row textarea:focus { outline: none; border-color: rgba(59, 130, 246, 0.6); }
+        .theme-chat-mode-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(71, 85, 105, 0.45);
             line-height: 1.4;
-            position: relative;
-            clear: both;
         }
-        .message.user {
-            background-color: #dcf8c6;
-            float: right;
-            border-bottom-right-radius: 0;
-        }
-        .message.bot {
-            background-color: #ffffff;
-            float: left;
-            border-bottom-left-radius: 0;
-        }
-        
-        /* Mesaj Gönderme Alanı */
-        .input-area {
-            display: flex;
-            padding: 15px;
-            background: #f0f0f0;
-            border-top: 1px solid #ccc;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            outline: none;
-            font-size: 15px;
-        }
-        .input-area button {
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            margin-left: 10px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .input-area button:hover { background-color: #166fe5; }
     </style>
 </head>
-<body>
+<body class="theme-body">
 
-    <div class="navbar">
-        <h1>BlogicodeAI Asistanı 🤖</h1>
-        <div class="nav-buttons">
-            <button onclick="window.location.href='index.html'">Keşfet</button>
-            <button onclick="window.location.href='panel.html'">Panelim</button>
-            <button onclick="window.location.href='home.html'">Yeni yazı</button>
+    <header class="theme-navbar">
+        <div class="sky-layer" aria-hidden="true">
+            <div class="stars"></div>
+            <div class="twinkle"></div>
+            <span class="plane" aria-hidden="true">✈</span>
+            <span class="plane" aria-hidden="true">✈</span>
+            <span class="plane" aria-hidden="true">✈</span>
         </div>
-    </div>
+        <div class="navbar-inner">
+            <div class="nav-left">
+                <a href="index.html" class="brand-link">
+                    <div class="brand-block">
+                        <p class="brand-title">AI Asistan</p>
+                        <p class="brand-sub">BlogicodeAI · Google Gemini</p>
+                    </div>
+                </a>
+            </div>
+            <nav class="nav-actions" aria-label="Üst menü">
+                <a href="index.html" class="btn-nav">Keşfet</a>
+                <a href="panel.html" class="btn-nav">Panelim</a>
+                <a href="home.html" class="btn-nav btn-nav-primary">Yeni yazı</a>
+            </nav>
+        </div>
+    </header>
 
-    <div class="chat-container">
-        <div class="chat-box" id="chatBox">
-            <div class="message bot">
-                Merhaba! Ben BlogicodeAI asistanıyım. Sana nasıl yardımcı olabilirim?
+    <div class="theme-chat-page">
+        <h1 class="theme-page-title" style="margin-bottom:4px;">Sohbet</h1>
+        <p class="theme-page-sub" style="margin-bottom:12px;">Teknoloji, kod, güncel gündem ve trend konularda sor; kısa ve net yanıtlar alırsın. Gerekirse web aramasıyla güncel kaynaklar kullanılır.</p>
+        <div class="theme-chat-suggestions" aria-label="Örnek sorular">
+            <button type="button" data-prompt="Bugün teknoloji dünyasında öne çıkan birkaç başlığı kısaca özetle.">Günün teknoloji özeti</button>
+            <button type="button" data-prompt="Yapay zeka alanında şu dönemde sık konuşulan trendler neler? Madde madde kısa tut.">AI trendleri</button>
+            <button type="button" data-prompt="Junior bir yazılımcı için bu hafta öğrenmeye değer 3 konu öner.">Öğrenme önerisi</button>
+        </div>
+        <div class="theme-chat-toolbar">
+            <button type="button" onclick="yeniSohbet()">Yeni sohbet</button>
+        </div>
+        <div class="theme-chat-box" id="chatBox">
+            <div class="theme-msg bot" id="welcomeMsg">
+                Merhaba! Ben BlogicodeAI asistanıyım. Teknoloji, yazılım ve güncel konularda sorularını yanıtlayabilirim. Nasıl yardımcı olayım?
             </div>
         </div>
-        
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="Mesajınızı yazın..." onkeypress="klavyeDinle(event)">
-            <button onclick="mesajGonder()">➤</button>
+        <div class="theme-chat-input-row">
+            <textarea id="userInput" placeholder="Mesajını yaz… (Enter gönderir, Shift+Enter satır atlar)" autocomplete="off" rows="2"></textarea>
+            <button type="button" onclick="mesajGonder()" aria-label="Gönder">➤</button>
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        const apiUrl = 'https://blogicode-ai.vercel.app/api';
-        
-        // Giriş kontrolü
+        const apiUrl = window.BLOGICODE_API_BASE;
+        /** @type {{ role: string, text: string }[]} */
+        let conversationHistory = [];
+
         if (!localStorage.getItem('userId')) {
             window.location.href = 'index.html';
         }
 
-        // Enter tuşuna basılınca gönderme
-        function klavyeDinle(event) {
-            if (event.key === "Enter") {
+        document.querySelectorAll('.theme-chat-suggestions button[data-prompt]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var t = document.getElementById('userInput');
+                t.value = btn.getAttribute('data-prompt') || '';
+                t.focus();
+                mesajGonder();
+            });
+        });
+
+        document.getElementById('userInput').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 mesajGonder();
             }
+        });
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function yeniSohbet() {
+            conversationHistory = [];
+            var chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '<div class="theme-msg bot" id="welcomeMsg">' +
+                escapeHtml('Merhaba! Ben BlogicodeAI asistanıyım. Teknoloji, yazılım ve güncel konularda sorularını yanıtlayabilirim. Nasıl yardımcı olayım?') +
+                '</div>';
+            document.getElementById('userInput').value = '';
         }
 
         async function mesajGonder() {
@@ -155,42 +159,62 @@
 
             if (!message) return;
 
-            // 1. Kullanıcı mesajını ekrana bas
-            chatBox.innerHTML += `<div class="message user">${message}</div>`;
-            inputField.value = ''; // Kutuyu temizle
-            chatBox.scrollTop = chatBox.scrollHeight; // En alta kaydır
+            var welcome = document.getElementById('welcomeMsg');
+            if (welcome) welcome.remove();
 
-            // 2. Yapay zeka düşünüyor efekti...
-            const typingId = "typing-" + Date.now();
-            chatBox.innerHTML += `<div class="message bot" id="${typingId}"><em>Yazıyor...</em></div>`;
+            chatBox.innerHTML += `<div class="theme-msg user">${escapeHtml(message)}</div>`;
+            inputField.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
+            const typingId = 'typing-' + Date.now();
+            chatBox.innerHTML += `<div class="theme-msg bot" id="${typingId}"><em>Yazıyor…</em></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const historyPayload = conversationHistory.map(function (h) {
+                return { role: h.role, text: h.text };
+            });
+
             try {
-                // 3. Senin Vercel'deki API'ye mesajı yolla
                 const response = await fetch(apiUrl + '/chatbot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ message: message, history: historyPayload })
                 });
-                
-                const data = await response.json();
-                
-                // 4. Yazıyor yazısını kaldır ve gerçek cevabı bas
-                document.getElementById(typingId).remove();
-                
-                if(response.ok) {
-                    chatBox.innerHTML += `<div class="message bot">${data.reply}</div>`;
+
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (_) { /* boş gövde */ }
+
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+
+                const replyText = (data && (data.reply || data.error)) ? (data.reply || data.error) : '';
+
+                if (response.ok && data.reply) {
+                    conversationHistory.push({ role: 'user', text: message });
+                    conversationHistory.push({ role: 'model', text: data.reply });
+                    if (conversationHistory.length > 40) {
+                        conversationHistory = conversationHistory.slice(-40);
+                    }
+                    var modeNote = (data.source === 'fallback' && data.hint)
+                        ? `<div class="theme-chat-mode-hint">${escapeHtml(data.hint)}</div>`
+                        : '';
+                    chatBox.innerHTML += `<div class="theme-msg bot">${escapeHtml(data.reply)}${modeNote}</div>`;
                 } else {
-                    chatBox.innerHTML += `<div class="message bot" style="color:red;">Hata: Asistana ulaşılamadı.</div>`;
+                    var errLine = replyText || (response.status === 503
+                        ? 'Asistan yapılandırılmamış (sunucuda GEMINI_API_KEY gerekli).'
+                        : 'Asistana ulaşılamadı.');
+                    chatBox.innerHTML += `<div class="theme-msg bot" style="color:#f87171;">${escapeHtml(errLine)}</div>`;
                 }
                 chatBox.scrollTop = chatBox.scrollHeight;
-                
             } catch (error) {
-                document.getElementById(typingId).remove();
-                chatBox.innerHTML += `<div class="message bot" style="color:red;">Sunucu bağlantı hatası!</div>`;
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+                chatBox.innerHTML += `<div class="theme-msg bot" style="color:#f87171;">Sunucu bağlantı hatası.</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
     </script>
-
 </body>
 </html>

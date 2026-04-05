@@ -1,6 +1,14 @@
-# Web Frontend Görev Dağılımı
+# Web Frontend — BlogicodeAI
 
-**Web Frontend Adresi:** [frontend.blogicodeai.com](https://frontend.blogicodeai.com)
+**Canlı web arayüzü (domain):** `https://www.blogicodeai.com`
+
+*(Canlı REST API: `https://blogicode-ai.vercel.app/api` — `config.js` canlıda bu tabanı kullanır.)*
+
+**Yerel:** `http://127.0.0.1:3000/`
+
+---
+
+## Web Frontend Görev Dağılımı
 
 Bu dokümanda, web uygulamasının kullanıcı arayüzü (UI) ve kullanıcı deneyimi (UX) görevleri listelenmektedir.
 

@@ -4,7 +4,7 @@ const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI, DynamicRetrievalMode } = require("@google/generative-ai");
 
 const app = express();
 app.use(cors());
@@ -13,17 +13,20 @@ app.use(express.json());
 const frontendDir = path.resolve(__dirname, '..', 'frontend');
 const indexHtmlPath = path.join(frontendDir, 'index.html');
 
-// --- MONGODB: backend/.env içinde MONGODB_URI (Atlas "Connect" ile kopyalanan tam adres)
+// --- MONGODB: Vercel'de Environment Variable MONGODB_URI; yerelde backend/.env
+// NOT: process.exit(1) kullanma — Vercel'de URI yoksa tüm route'lar yüklenmeden süreç ölür, /api/health bile çalışmaz.
 const mongoURI = process.env.MONGODB_URI;
-if (!mongoURI) {
-    console.error('MONGODB_URI eksik. backend klasöründe .env dosyası oluşturup şunu ekleyin:');
-    console.error('MONGODB_URI=mongodb+srv://KULLANICI:SIFRE@cluster.../blogicode?...');
-    process.exit(1);
+if (mongoURI) {
+    mongoose.connect(mongoURI)
+        .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
+        .catch((err) => console.log("Veritabanı bağlantı hatası:", err));
+} else {
+    console.error('MONGODB_URI tanımlı değil. Vercel → Settings → Environment Variables → MONGODB_URI ekleyin; yerelde backend/.env kullanın.');
+    if (require.main === module && !process.env.VERCEL) {
+        console.error('Yerel çalıştırma için çıkılıyor (node index.js).');
+        process.exit(1);
+    }
 }
-
-mongoose.connect(mongoURI)
-    .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
-    .catch((err) => console.log("Veritabanı bağlantı hatası:", err));
 
 // --- VERİTABANI ŞEMALARI (Modeller) ---
 const User = mongoose.model('User', new mongoose.Schema({
@@ -73,6 +76,13 @@ const Comment = mongoose.model('Comment', new mongoose.Schema({
     content: { type: String, required: true }
 }, { timestamps: true }));
 
+/** API yanıtlarında şifre dönülmez */
+function userToPublic(userDoc) {
+    if (!userDoc) return null;
+    const o = typeof userDoc.toObject === 'function' ? userDoc.toObject() : { ...userDoc };
+    delete o.password;
+    return o;
+}
 
 // --- 11 GEREKSİNİM İÇİN API ROTALARI ---
 
@@ -80,11 +90,23 @@ const Comment = mongoose.model('Comment', new mongoose.Schema({
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password } = req.body;
-        const userExists = await User.findOne({ email });
+        const fn = firstName != null ? String(firstName).trim() : '';
+        const ln = lastName != null ? String(lastName).trim() : '';
+        const em = email != null ? String(email).trim() : '';
+        const pw = password != null ? String(password) : '';
+
+        if (!fn || !ln) {
+            return res.status(400).json({ message: 'Ad ve soyad zorunludur.' });
+        }
+        if (!em || !pw.trim()) {
+            return res.status(400).json({ message: 'E-posta ve şifre zorunludur.' });
+        }
+
+        const userExists = await User.findOne({ email: em });
         if (userExists) return res.status(409).json({ message: "Bu email adresi zaten kullanımda." });
 
-        const newUser = await User.create({ firstName, lastName, email, password });
-        res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu", user: newUser });
+        const newUser = await User.create({ firstName: fn, lastName: ln, email: em, password: pw });
+        res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu", user: userToPublic(newUser) });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -94,10 +116,18 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email, password });
+        const em = email != null ? String(email).trim() : '';
+        const pw = password != null ? String(password) : '';
+        if (!em || !pw) {
+            return res.status(400).json({ message: 'E-posta ve şifre gerekli.' });
+        }
+        const user = await User.findOne({ email: em, password: pw });
         if (user) {
-            // Frontend'in çökmaması için basit bir sahte token dönüyoruz
-            res.status(200).json({ message: "Giriş başarılı", token: "blogicodeai-jwt-token-777", user });
+            res.status(200).json({
+                message: "Giriş başarılı",
+                token: "blogicodeai-jwt-token-777",
+                user: userToPublic(user)
+            });
         } else {
             res.status(401).json({ message: "Hatalı email veya şifre." });
         }
@@ -137,7 +167,7 @@ app.get('/api/users/:id', async (req, res) => {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
         const userPosts = await Post.find({ authorId: req.params.id });
-        res.status(200).json({ user, posts: userPosts });
+        res.status(200).json({ user: userToPublic(user), posts: userPosts });
     } catch (error) {
         res.status(500).json({ error: "Geçersiz ID formatı" });
     }
@@ -162,7 +192,7 @@ app.put('/api/users/:id', async (req, res) => {
 
         const updatedUser = await User.findByIdAndUpdate(req.params.id, patch, { new: true });
         if (!updatedUser) return res.status(404).json({ message: "Kullanıcı bulunamadı." });
-        res.status(200).json({ message: "Profil başarıyla güncellendi", user: updatedUser });
+        res.status(200).json({ message: "Profil başarıyla güncellendi", user: userToPublic(updatedUser) });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -186,7 +216,20 @@ app.delete('/api/users/:id', async (req, res) => {
 // 6. Blog Yazısı Oluşturma
 app.post('/api/posts', async (req, res) => {
     try {
-        const newPost = await Post.create(req.body);
+        const { title, content, authorId, category, tags } = req.body;
+        if (!title || !String(title).trim() || !content || !String(content).trim()) {
+            return res.status(400).json({ message: 'Başlık ve içerik zorunludur.' });
+        }
+        if (!authorId || !String(authorId).trim()) {
+            return res.status(400).json({ message: 'Yazar bilgisi (authorId) gerekli.' });
+        }
+        const newPost = await Post.create({
+            title: String(title).trim(),
+            content: String(content).trim(),
+            authorId: String(authorId).trim(),
+            category: category != null ? String(category).trim() : '',
+            tags: Array.isArray(tags) ? tags : []
+        });
         res.status(201).json({ message: "Yazı başarıyla oluşturuldu", post: newPost });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -382,7 +425,19 @@ app.get('/api/posts/:id/comments', async (req, res) => {
 app.post('/api/posts/:id/comments', async (req, res) => {
     try {
         const { content, authorId } = req.body;
-        const newComment = await Comment.create({ postId: req.params.id, authorId, content });
+        if (!content || !String(content).trim()) {
+            return res.status(400).json({ message: 'Yorum metni boş olamaz.' });
+        }
+        if (!authorId || !String(authorId).trim()) {
+            return res.status(400).json({ message: 'Yorum için kullanıcı kimliği gerekli.' });
+        }
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Yazı bulunamadı.' });
+        const newComment = await Comment.create({
+            postId: String(req.params.id),
+            authorId: String(authorId).trim(),
+            content: String(content).trim()
+        });
         res.status(201).json({ message: "Yorum başarıyla eklendi", comment: newComment });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -405,30 +460,204 @@ app.delete('/api/comments/:id', async (req, res) => {
     }
 });
 
-// 11. AI Asistanı (Gerçek Gemini Bağlantısı)
-app.post('/api/chatbot', async (req, res) => {
-    try {
-        const { message } = req.body;
-        
-        // Yapay zeka anahtarını env dosyasından kurtarıp doğrudan buraya yazdık
-        const apiKey = "AIzaSyBB3ZMooxsAx-I1DfOwo57A2QbyYDLbIWk".trim(); 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+const CHAT_SYSTEM_INSTRUCTION = `Sen BlogicodeAI platformunun resmi yapay zeka asistanısın. Türkçe, net ve samimi konuş.
+Odak: teknoloji, yazılım, yapay zeka, siber güvenlik, bulut, veri bilimi, kariyer ve güncel dijital gündem.
+Kullanıcı güncel haberler veya trend konular sorarsa: kısa madde işaretleriyle özet ver; mümkünse arama kaynaklarından gelen bilgiyi kullan.
+Kesin tarih/sayı iddiası gerektiren konularda, bilginin anlık doğrulanamayabileceğini tek cümleyle belirt.
+Kod istenirse çalışır örnek ver; güvenlik veya hukuk tavsiyesi yerine genel bilgilendirme yap, kritik konularda uzmana yönlendir.
+Yanıtları gereksiz uzatma; okunaklı paragraflar veya kısa listeler kullan.`;
 
-        const result = await model.generateContent(message);
-        const response = await result.response;
-        const text = response.text();
-
-        res.status(200).json({ reply: text });
-    } catch (error) {
-        console.error("Yapay zeka hatası:", error.message);
-        res.status(500).json({ reply: "Hata: Asistan şu an meşgul, lütfen tekrar deneyin." });
+function normalizeChatHistory(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const item of raw.slice(-24)) {
+        if (!item || typeof item.text !== 'string') continue;
+        const t = item.text.trim();
+        if (!t) continue;
+        const role = item.role === 'model' ? 'model' : 'user';
+        out.push({ role, parts: [{ text: t.slice(0, 12000) }] });
     }
+    return out;
+}
+
+function appendGroundingSources(text, response) {
+    try {
+        const cand = response?.candidates?.[0];
+        const chunks = cand?.groundingMetadata?.groundingChunks;
+        if (!Array.isArray(chunks) || !chunks.length) return text;
+        const lines = [];
+        const seen = new Set();
+        for (const ch of chunks) {
+            const uri = ch?.web?.uri;
+            const title = ch?.web?.title;
+            if (!uri || seen.has(uri)) continue;
+            seen.add(uri);
+            lines.push(title ? `• ${title}: ${uri}` : `• ${uri}`);
+            if (lines.length >= 6) break;
+        }
+        if (lines.length) return `${text}\n\n— Kaynaklar —\n${lines.join('\n')}`;
+    } catch (_) { /* ignore */ }
+    return text;
+}
+
+/** Gemini yok / hata verince bile sohbet akışı kırılmasın: her zaman anlamlı Türkçe yanıt. */
+function localAssistantReply(userText, history) {
+    const lower = userText.toLowerCase().trim();
+    const lastModel = [...(history || [])].reverse().find((h) => h && h.role === 'model' && typeof h.text === 'string');
+    const lastModelText = lastModel ? lastModel.text.slice(0, 400) : '';
+
+    if (/^(evet|tamam|olur|peki|evt|eyv)$/i.test(userText.trim())) {
+        return 'Tamam. Önceki konuda devam edelim mi, yoksa yeni bir soru mu sormak istersin?\n\nÖrnek: "REST API nedir?" veya "MongoDB indeks ne işe yarar?"';
+    }
+    if (/^(hayır|hayir|yok|olmaz|maalesef)$/i.test(userText.trim())) {
+        return 'Anladım. Başka bir konuda yardımcı olayım. Ne merak ediyorsun?';
+    }
+
+    if (/merhaba|selam|hey|sa\b|günaydın|iyi günler|iyi akşamlar/i.test(userText)) {
+        return 'Merhaba! BlogicodeAI asistanıyım. Teknoloji, yazılım, yapay zeka veya platformdaki yazılar hakkında konuşabiliriz.\n\nİpucu: Sunucuda GEMINI_API_KEY tanımlıysa yanıtlar Google Gemini ile zenginleşir; tanımlı değilse şu an yerel (akıllı yedek) moddasın — yine de sohbet edebilirsin.';
+    }
+
+    if (/teşekkür|sağol|saol|eyvallah|thanks/i.test(userText)) {
+        return 'Rica ederim. Başka bir sorunda yazman yeterli.';
+    }
+
+    if (/trend|haber|gündem|guncel|güncel|bugün ne|son dakika/i.test(lower)) {
+        return 'Güncel haber başlıkları için canlı veri kaynağına bağlı değilim (yerel mod). Şunları önerebilirim:\n• BBC News Technology, The Verge, TechCrunch\n• Türkçe: Webtekno, ShiftDelete.Net, Donanım Haber\n\nGenel teknoloji gündeminde sık geçen temalar: büyük dil modelleri ve düzenlemeler, bulut maliyetleri, siber güvenlik olayları, mobil ve açık kaynak ekosistem. Belirli bir ürün veya şirket adı yazarsan o çerçevede bilgi veririm.\n\nTam güncel özet için sunucuya GEMINI_API_KEY + isteğe bağlı GEMINI_ENABLE_SEARCH=true ekleyebilirsin.';
+    }
+
+    if (/nasıl başlarım|nereden başlayım|öğren|kurs|roadmap/i.test(lower)) {
+        return 'Yazılıma başlangıç için pratik bir yol:\n1) Bir dil seç: genelde Python (veri/otomasyon) veya JavaScript (web).\n2) Temel: değişkenler, döngüler, fonksiyonlar, hata ayıklama.\n3) Küçük proje: hesap makinesi, yapılacaklar listesi API’si, basit blog.\n4) Git + GitHub kullanmayı erken öğren.\n\nHangi alan (web, mobil, veri) ilgini çekiyor? Ona göre daraltalım.';
+    }
+
+    if (/python|javascript|typescript|react|node|java\b|go\b|rust|c\+\+|mongodb|sql|api|rest|docker|kubernetes/i.test(lower)) {
+        const topic = lower.includes('python') ? 'Python'
+            : lower.includes('typescript') || /\bts\b/.test(lower) ? 'TypeScript'
+                : /javascript|react|node/.test(lower) ? 'JavaScript / Node / React'
+                    : lower.includes('mongodb') ? 'MongoDB'
+                        : lower.includes('docker') || lower.includes('kubernetes') ? 'Konteyner / DevOps'
+                            : 'Bu teknoloji';
+        return `${topic} tarafında yardımcı olabilirim. Sorunu veya hedefini biraz aç: öğrenmek mi istiyorsun, hata mı alıyorsun, mimari mi kuruyorsun?\n\nKısa not: Yerel modda genel rehberlik veriyorum; çok uzun kod üretimi için GEMINI_API_KEY ile Gemini açmak en iyisi.`;
+    }
+
+    if (/kim|sen kimsin|ne işe yar|blogicode/i.test(lower)) {
+        return 'Ben BlogicodeAI sohbet asistanıyım: teknoloji ve kodlama konularında yönlendirme ve özetle yardımcı olurum. Platformda yazı keşfi, panel ve yorumlar site üzerinden.\n\nŞu an ' + (lastModelText ? 'konuşmaya devam edebiliriz.' : 'yeni bir konu açabilirsin.');
+    }
+
+    const snippet = userText.length > 220 ? `${userText.slice(0, 220)}…` : userText;
+    return `Şunu yazdın: "${snippet}"\n\nBunu şöyle ilerletebiliriz:\n• Daha net bir hedef yaz (ör. "Express'te CORS hatası", "SQL JOIN örneği").\n• İstersen bir önceki cevabıma tepki ver: neyi derinleştirelim?\n• Keşfet sayfasında ilgili yazılara da göz atabilirsin.\n\nTam yapay zeka cevabı için backend .env içine Google AI Studio anahtarını GEMINI_API_KEY olarak ekle; yine de anahtar olmadan bu sohbet ekranı çalışmaya devam eder.`;
+}
+
+const DEFAULT_GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-8b'];
+
+function parseModelList() {
+    const raw = (process.env.GEMINI_MODEL || '').trim();
+    if (raw) {
+        return raw.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    return [...DEFAULT_GEMINI_MODELS];
+}
+
+async function geminiTryModel(genAI, modelName, userText, geminiHistory, useSearch) {
+    const searchTools = useSearch
+        ? [{
+            googleSearchRetrieval: {
+                dynamicRetrievalConfig: {
+                    mode: DynamicRetrievalMode.MODE_DYNAMIC,
+                    dynamicThreshold: 0.25
+                }
+            }
+        }]
+        : [];
+
+    const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: CHAT_SYSTEM_INSTRUCTION,
+        tools: searchTools.length ? searchTools : undefined
+    });
+    const chat = model.startChat({ history: geminiHistory });
+    const result = await chat.sendMessage(userText);
+    const response = result.response;
+    let text;
+    try {
+        text = response.text();
+    } catch (e) {
+        const pr = response.promptFeedback;
+        const reason = pr?.blockReason || e.message || 'blocked';
+        throw new Error(String(reason));
+    }
+    if (!text || !String(text).trim()) {
+        throw new Error('Boş yanıt');
+    }
+    return appendGroundingSources(String(text).trim(), response);
+}
+
+async function geminiGenerateReply(apiKey, userText, history) {
+    const geminiHistory = normalizeChatHistory(history);
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const models = parseModelList();
+    const enableSearch = String(process.env.GEMINI_ENABLE_SEARCH || '').toLowerCase() === 'true';
+
+    for (const modelName of models) {
+        try {
+            return await geminiTryModel(genAI, modelName, userText, geminiHistory, false);
+        } catch (e) {
+            console.warn(`[chatbot] Gemini model=${modelName} (arama kapalı):`, e.message);
+        }
+    }
+
+    if (enableSearch) {
+        for (const modelName of models) {
+            try {
+                return await geminiTryModel(genAI, modelName, userText, geminiHistory, true);
+            } catch (e) {
+                console.warn(`[chatbot] Gemini model=${modelName} (arama açık):`, e.message);
+            }
+        }
+    }
+
+    return null;
+}
+
+// 11. AI Asistanı — önce Gemini (anahtar varsa), olmazsa her zaman yerel yanıt (HTTP 200)
+app.post('/api/chatbot', async (req, res) => {
+    const { message, history } = req.body || {};
+    const userText = typeof message === 'string' ? message.trim() : '';
+    if (!userText) {
+        return res.status(400).json({ error: 'Mesaj gerekli', reply: 'Lütfen bir mesaj yazın.' });
+    }
+
+    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+
+    if (apiKey) {
+        try {
+            const reply = await geminiGenerateReply(apiKey, userText, history);
+            if (reply) {
+                return res.status(200).json({ reply, source: 'gemini' });
+            }
+        } catch (error) {
+            console.error('[chatbot] Gemini beklenmeyen hata:', error.message);
+        }
+    } else {
+        console.warn('[chatbot] GEMINI_API_KEY boş — yerel asistan kullanılıyor.');
+    }
+
+    const fallback = localAssistantReply(userText, history);
+    return res.status(200).json({
+        reply: fallback,
+        source: 'fallback',
+        hint: apiKey ? 'Gemini yanıt veremedi; yerel mod kullanıldı.' : 'GEMINI_API_KEY tanımlı değil; yerel mod.'
+    });
 });
 
 // API durumu (statik site / kök index.html ile çakışmaması için ayrı yol)
 app.get('/api/health', (req, res) => {
-    res.json({ ok: true, mesaj: "BlogicodeAI API çalışıyor." });
+    const dbOk = Boolean(mongoURI) && mongoose.connection.readyState === 1;
+    res.json({
+        ok: true,
+        mesaj: 'BlogicodeAI API çalışıyor.',
+        db: dbOk,
+        mongoConfigured: Boolean(mongoURI)
+    });
 });
 // YÖNETİCİ İÇİN: Tüm Kullanıcıları Getir
 app.get('/api/users', async (req, res) => {
@@ -462,14 +691,18 @@ if (fs.existsSync(indexHtmlPath)) {
     });
 }
 
+module.exports = app;
+
 const PORT = Number(process.env.PORT) || 3000;
-const server = app.listen(PORT, () => {
-    console.log(`Sunucu port ${PORT} üzerinde dinliyor.`);
-    console.log(`[Blogicode] index.html: ${indexHtmlPath}`);
-    console.log(`[Blogicode] dosya var mı: ${fs.existsSync(indexHtmlPath)}`);
-    console.log(`Tarayıcıda aç: http://127.0.0.1:${PORT}/ (mümkünse önce bunu dene)`);
-    console.log('https:// kullanma. Port 3000\'de başka bir program varsa kapat veya PORT=3001 node index.js kullan.');
-});
-server.on('error', (err) => {
-    console.error('Sunucu başlamadı (port meşgul olabilir):', err.message);
-});
+if (require.main === module) {
+    const server = app.listen(PORT, () => {
+        console.log(`Sunucu port ${PORT} üzerinde dinliyor.`);
+        console.log(`[Blogicode] index.html: ${indexHtmlPath}`);
+        console.log(`[Blogicode] dosya var mı: ${fs.existsSync(indexHtmlPath)}`);
+        console.log(`Tarayıcıda aç: http://127.0.0.1:${PORT}/ (mümkünse önce bunu dene)`);
+        console.log('https:// kullanma. Port 3000\'de başka bir program varsa kapat veya PORT=3001 node index.js kullan.');
+    });
+    server.on('error', (err) => {
+        console.error('Sunucu başlamadı (port meşgul olabilir):', err.message);
+    });
+}

@@ -20,8 +20,8 @@
 
 ## Proje Linkleri
 
-- **REST API Adresi:** [api.blogicodeai.com](https://api.blogicodeai.com)
-- **Web Frontend Adresi:** [frontend.blogicodeai.com](https://frontend.blogicode.com)
+- **Canlı site (ör. arayüz):** [https://www.blogicodeai.com](https://www.blogicodeai.com)  
+- **Canlı REST API:** `https://blogicode-ai.vercel.app/api`
 
 ---
 
