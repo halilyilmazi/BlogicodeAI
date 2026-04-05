@@ -17,7 +17,7 @@ const indexHtmlPath = path.join(frontendDir, 'index.html');
 // NOT: process.exit(1) kullanma — Vercel'de URI yoksa tüm route'lar yüklenmeden süreç ölür, /api/health bile çalışmaz.
 const mongoURI = process.env.MONGODB_URI;
 if (mongoURI) {
-    mongoose.connect(mongoURI)
+    mongoose.connect("mongodb+srv://ylmzyzlm:iHy.4090@cluster0.yzs8d09.mongodb.net/blogicode?appName=Cluster0")
         .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
         .catch((err) => console.log("Veritabanı bağlantı hatası:", err));
 } else {
