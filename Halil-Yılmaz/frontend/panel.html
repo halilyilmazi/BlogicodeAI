@@ -189,9 +189,8 @@
         </div>
     </div>
 
-    <script src="config.js"></script>
     <script>
-        const apiUrl = window.BLOGICODE_API_BASE;
+       const apiUrl = 'https://blogicode-ai.vercel.app/api';
         const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/notionists-neutral/svg?seed=blogicode-unisex';
         const userId = localStorage.getItem('userId');
         if (!userId) window.location.href = 'index.html';

@@ -90,10 +90,9 @@
         <div class="toggle-link" onclick="formuDegistir()" id="toggleText">Hesabın yok mu? Kayıt Ol</div>
     </div>
 
-    <script src="config.js"></script>
     <script>
         let isLoginMode = true; // Sayfa ilk açıldığında giriş modunda
-        const apiUrl = window.BLOGICODE_API_BASE;
+        const apiUrl = 'https://blogicode-ai.vercel.app/api';
 
         // Formu Giriş/Kayıt arasında değiştirme fonksiyonu
         function formuDegistir() {
