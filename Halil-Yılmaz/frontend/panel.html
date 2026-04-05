@@ -75,6 +75,7 @@
     <nav class="tabs" role="tablist">
         <button type="button" class="active" data-section="fav" role="tab">Favorilerim</button>
         <button type="button" data-section="posts" role="tab">Yazılarım</button>
+        <button type="button" data-section="comments" role="tab">Yorumlarım</button>
         <button type="button" data-section="profil" role="tab">Profil bilgilerim</button>
     </nav>
     <main>
@@ -84,11 +85,22 @@
         <section id="sec-posts" class="panel-section" aria-labelledby="tab-posts">
             <div id="myPostsContainer"><p class="empty-hint">Yükleniyor...</p></div>
         </section>
+        <section id="sec-comments" class="panel-section" aria-labelledby="tab-comments">
+            <div id="myCommentsContainer"><p class="empty-hint">Yükleniyor...</p></div>
+        </section>
         <section id="sec-profil" class="panel-section" aria-labelledby="tab-profil">
-            <img id="imgPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" class="profile-preview" alt="Önizleme">
+            <div class="profile-shortcuts" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+                <button type="button" class="btn btn-ghost" onclick="goPanelTab('posts')">Yazılarımı yönet</button>
+                <button type="button" class="btn btn-ghost" onclick="goPanelTab('comments')">Yorumlarım</button>
+            </div>
+            <img id="imgPreview" src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=blogicode-unisex" class="profile-preview" alt="Önizleme">
             <div class="form-group">
-                <label>Profil fotoğrafı URL</label>
-                <input type="text" id="profilePhoto" placeholder="Resim adresi" oninput="document.getElementById('imgPreview').src=this.value || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'">
+                <label>Profil fotoğrafı yükle</label>
+                <input type="file" id="profilePhotoFile" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Profil fotoğrafı URL (isteğe bağlı)</label>
+                <input type="text" id="profilePhoto" placeholder="https://... veya yukarıdan dosya seç" oninput="syncPreviewFromUrl()">
             </div>
             <div style="display:flex;gap:12px;flex-wrap:wrap;">
                 <div class="form-group" style="flex:1;min-width:140px;">
@@ -129,9 +141,29 @@
             </div>
             <button type="button" class="btn btn-primary" onclick="profilKaydet()">Kaydet</button>
             <p id="panelMsg"></p>
-            <button type="button" class="btn btn-ghost" style="margin-top:24px;width:100%;color:#f87171;border-color:#7f1d1d;" onclick="hesapSil()">Hesabımı sil</button>
+            <button type="button" class="btn btn-ghost" style="margin-top:24px;width:100%;color:#f87171;border-color:#7f1d1d;" onclick="openDeleteAccountModal()">Hesabımı sil</button>
         </section>
     </main>
+
+    <div id="viewPostModal" class="modal-bg" aria-hidden="true">
+        <div class="modal-box">
+            <h3 id="viewPostTitle"></h3>
+            <p id="viewPostMeta" class="meta"></p>
+            <div id="viewPostBody" style="white-space:pre-wrap;color:#cbd5e1;font-size:14px;line-height:1.55;margin:14px 0;"></div>
+            <button type="button" class="btn btn-primary" onclick="closeViewPostModal()">Kapat</button>
+        </div>
+    </div>
+
+    <div id="deleteAccountModal" class="modal-bg" aria-hidden="true">
+        <div class="modal-box" style="max-width:420px;">
+            <h3>Hesabını sil</h3>
+            <p style="margin:0;color:#cbd5e1;line-height:1.5;">Emin misin, seninle okuyup yazmak çok keyifliydi?</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+                <button type="button" class="btn btn-ghost" onclick="closeDeleteAccountModal()">Vazgeç</button>
+                <button type="button" class="btn btn-ghost" style="color:#f87171;" onclick="confirmDeleteAccount()">Evet :(</button>
+            </div>
+        </div>
+    </div>
 
     <div id="editModal" class="modal-bg" aria-hidden="true">
         <div class="modal-box">
@@ -160,8 +192,35 @@
     <script src="config.js"></script>
     <script>
         const apiUrl = window.BLOGICODE_API_BASE;
+        const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/notionists-neutral/svg?seed=blogicode-unisex';
         const userId = localStorage.getItem('userId');
         if (!userId) window.location.href = 'index.html';
+
+        function goPanelTab(section) {
+            const tab = document.querySelector('.tabs button[data-section="' + section + '"]');
+            if (tab) tab.click();
+        }
+
+        function syncPreviewFromUrl() {
+            const v = document.getElementById('profilePhoto').value.trim();
+            document.getElementById('imgPreview').src = v || DEFAULT_AVATAR;
+        }
+
+        document.getElementById('profilePhotoFile').addEventListener('change', (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (!f) return;
+            if (f.size > 1.5 * 1024 * 1024) {
+                alert('Görsel 1,5 MB sınırını aşıyor. Lütfen daha küçük bir dosya seç.');
+                e.target.value = '';
+                return;
+            }
+            const r = new FileReader();
+            r.onload = () => {
+                document.getElementById('profilePhoto').value = r.result;
+                document.getElementById('imgPreview').src = r.result;
+            };
+            r.readAsDataURL(f);
+        });
 
         document.querySelectorAll('.tabs button').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -172,12 +231,13 @@
                 const el = document.getElementById(id);
                 if (el) el.classList.add('active');
                 history.replaceState(null, '', '#' + btn.dataset.section);
+                if (btn.dataset.section === 'comments') loadMyComments();
             });
         });
 
         function applyHash() {
             const h = (location.hash || '#fav').slice(1);
-            const map = { fav: 'fav', posts: 'posts', profil: 'profil' };
+            const map = { fav: 'fav', posts: 'posts', comments: 'comments', profil: 'profil' };
             const key = map[h] || 'fav';
             const tab = document.querySelector('.tabs button[data-section="' + key + '"]');
             if (tab) tab.click();
@@ -233,6 +293,7 @@
                                 <div class="meta">${escapeHtml(p.category || 'Genel')} · ${d}</div>
                             </div>
                             <div class="post-row-actions">
+                                <button type="button" class="btn btn-ghost" onclick="openViewPostModal('${p._id}')">Görüntüle</button>
                                 <button type="button" class="btn btn-ghost" onclick="openEditModal('${p._id}')">Düzenle</button>
                                 <button type="button" class="btn btn-ghost" style="color:#f87171;" onclick="silYazi('${p._id}')">Sil</button>
                             </div>
@@ -241,6 +302,80 @@
                 }).join('');
             } catch (e) {
                 box.innerHTML = '<p class="empty-hint" style="color:#f87171;">Yazılar yüklenemedi.</p>';
+            }
+        }
+
+        async function openViewPostModal(id) {
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId);
+                const data = await res.json();
+                const posts = data.posts || [];
+                const p = posts.find((x) => String(x._id) === String(id));
+                if (!p) return;
+                document.getElementById('viewPostTitle').textContent = p.title || '';
+                document.getElementById('viewPostMeta').textContent = (p.category || 'Genel') + ' · ' + new Date(p.createdAt).toLocaleDateString('tr-TR');
+                document.getElementById('viewPostBody').textContent = p.content || '';
+                document.getElementById('viewPostModal').classList.add('open');
+            } catch (e) {
+                alert('Yazı yüklenemedi.');
+            }
+        }
+        function closeViewPostModal() {
+            document.getElementById('viewPostModal').classList.remove('open');
+        }
+        document.getElementById('viewPostModal').addEventListener('click', (e) => {
+            if (e.target.id === 'viewPostModal') closeViewPostModal();
+        });
+
+        async function loadMyComments() {
+            const box = document.getElementById('myCommentsContainer');
+            box.innerHTML = '<p class="empty-hint">Yükleniyor...</p>';
+            try {
+                const res = await fetch(apiUrl + '/users/' + userId + '/comments');
+                const json = await res.json();
+                const arr = json.data || [];
+                if (!arr.length) {
+                    box.innerHTML = '<p class="empty-hint">Henüz yorumun yok. Keşfet sayfasından yazılara yorum bırakabilirsin.</p>';
+                    return;
+                }
+                box.innerHTML = arr.map((c) => {
+                    const d = new Date(c.createdAt).toLocaleDateString('tr-TR');
+                    const cid = c._id;
+                    return `
+                        <div class="post-row" id="crow-${cid}">
+                            <div>
+                                <h4>${escapeHtml(c.postTitle)}</h4>
+                                <div class="meta">${d}</div>
+                                <p style="margin:8px 0 0;font-size:14px;color:#cbd5e1;line-height:1.5;">${escapeHtml(c.content)}</p>
+                            </div>
+                            <div class="post-row-actions">
+                                <button type="button" class="btn btn-ghost" style="color:#f87171;" onclick="silYorum('${cid}')">Sil</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                box.innerHTML = '<p class="empty-hint" style="color:#f87171;">Yorumlar yüklenemedi.</p>';
+            }
+        }
+
+        async function silYorum(id) {
+            if (!confirm('Bu yorumu silmek istediğine emin misin?')) return;
+            try {
+                const res = await fetch(apiUrl + '/comments/' + id + '?authorId=' + encodeURIComponent(userId), { method: 'DELETE' });
+                if (res.ok || res.status === 204) {
+                    const row = document.getElementById('crow-' + id);
+                    if (row) row.remove();
+                    const box = document.getElementById('myCommentsContainer');
+                    if (box && !box.querySelector('.post-row')) {
+                        box.innerHTML = '<p class="empty-hint">Henüz yorumun yok. Keşfet sayfasından yazılara yorum bırakabilirsin.</p>';
+                    }
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.message || 'Silinemedi.');
+                }
+            } catch (e) {
+                alert('Sunucu hatası.');
             }
         }
 
@@ -330,8 +465,7 @@
                 document.getElementById('bio').value = u.bio || '';
                 document.getElementById('profilePhoto').value = u.profilePhoto || '';
                 const prev = document.getElementById('imgPreview');
-                if (u.profilePhoto) prev.src = u.profilePhoto;
-                else prev.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(userId);
+                prev.src = (u.profilePhoto && String(u.profilePhoto).trim()) ? String(u.profilePhoto).trim() : DEFAULT_AVATAR;
             } catch (e) { console.error(e); }
         }
 
@@ -368,9 +502,20 @@
             }
         }
 
-        async function hesapSil() {
-            if (!confirm('Hesabın kalıcı olarak silinecek. Emin misin?')) return;
-            await fetch(apiUrl + '/users/' + userId, { method: 'DELETE' });
+        function openDeleteAccountModal() {
+            document.getElementById('deleteAccountModal').classList.add('open');
+        }
+        function closeDeleteAccountModal() {
+            document.getElementById('deleteAccountModal').classList.remove('open');
+        }
+        document.getElementById('deleteAccountModal').addEventListener('click', (e) => {
+            if (e.target.id === 'deleteAccountModal') closeDeleteAccountModal();
+        });
+
+        async function confirmDeleteAccount() {
+            try {
+                await fetch(apiUrl + '/users/' + userId, { method: 'DELETE' });
+            } catch (e) { /* yine de çıkış */ }
             localStorage.clear();
             window.location.href = 'index.html';
         }

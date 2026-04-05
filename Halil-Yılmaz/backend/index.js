@@ -53,7 +53,8 @@ const TOPIC_KEYWORDS = {
     'mobil': ['mobil', 'android', 'ios', 'swift', 'kotlin', 'flutter', 'react native'],
     'devops': ['devops', 'docker', 'kubernetes', 'k8s', 'ci/cd', 'jenkins', 'gitops', 'terraform'],
     'ag-teknolojileri': ['ağ', 'network', 'tcp', 'routing', 'switch', 'vlan', 'cisco'],
-    'veritabani': ['veritabanı', 'veritabani', 'database', 'sql', 'mongodb', 'postgresql', 'redis', 'nosql']
+    'veritabani': ['veritabanı', 'veritabani', 'database', 'sql', 'mongodb', 'postgresql', 'redis', 'nosql'],
+    'robotik': ['robotik', 'robot', 'ros', 'cobot', 'endüstriyel robot', 'iot', 'arduino', 'servo', 'otomasyon']
 };
 
 const Comment = mongoose.model('Comment', new mongoose.Schema({
@@ -90,6 +91,31 @@ app.post('/api/auth/login', async (req, res) => {
         } else {
             res.status(401).json({ message: "Hatalı email veya şifre." });
         }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Kullanıcının yorumları (yazı başlığı ile)
+app.get('/api/users/:id/comments', async (req, res) => {
+    try {
+        const uid = req.params.id;
+        const comments = await Comment.find({ authorId: uid }).sort({ createdAt: -1 });
+        const data = await Promise.all(comments.map(async (c) => {
+            let postTitle = '(silinmiş yazı)';
+            try {
+                const post = await Post.findById(c.postId).select('title');
+                if (post && post.title) postTitle = post.title;
+            } catch (e) { /* ignore */ }
+            return {
+                _id: c._id,
+                postId: c.postId,
+                postTitle,
+                content: c.content,
+                createdAt: c.createdAt
+            };
+        }));
+        res.status(200).json({ data });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -132,10 +158,15 @@ app.put('/api/users/:id', async (req, res) => {
     }
 });
 
-// 5. Hesap Silme
+// 5. Hesap Silme (yazılar, ilgili yorumlar ve kullanıcının yorumları)
 app.delete('/api/users/:id', async (req, res) => {
     try {
-        await User.findByIdAndDelete(req.params.id);
+        const id = req.params.id;
+        const posts = await Post.find({ authorId: id });
+        const postIds = posts.map((p) => String(p._id));
+        await Comment.deleteMany({ $or: [{ authorId: id }, { postId: { $in: postIds } }] });
+        await Post.deleteMany({ authorId: id });
+        await User.findByIdAndDelete(id);
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -163,18 +194,44 @@ function buildTopicMatch(topic) {
     return { $or: or };
 }
 
-// 7. Blog Yazılarını Listeleme (topic, sort=recent|popular)
+// 7. Blog Yazılarını Listeleme (topic, sort=recent|popular|oldest, q=arama)
 app.get('/api/posts', async (req, res) => {
     try {
-        const sort = (req.query.sort || 'recent').toLowerCase();
+        const sortParam = (req.query.sort || 'recent').toLowerCase();
         const topic = req.query.topic ? String(req.query.topic).trim() : '';
+        const q = req.query.q ? String(req.query.q).trim() : '';
 
         if (topic && !TOPIC_KEYWORDS[topic]) {
             return res.status(200).json({ data: [] });
         }
 
         const topicMatch = topic ? buildTopicMatch(topic) : null;
-        const matchStage = topicMatch || {};
+        let searchMatch = null;
+        if (q) {
+            const rx = new RegExp(escapeRegex(q), 'i');
+            searchMatch = {
+                $or: [
+                    { title: rx },
+                    { content: rx },
+                    { category: rx },
+                    { tags: rx }
+                ]
+            };
+        }
+
+        const andParts = [];
+        if (topicMatch) andParts.push(topicMatch);
+        if (searchMatch) andParts.push(searchMatch);
+        const matchStage = andParts.length ? { $and: andParts } : {};
+
+        let sortObj;
+        if (sortParam === 'popular') {
+            sortObj = { popularity: -1, createdAt: -1 };
+        } else if (sortParam === 'oldest') {
+            sortObj = { createdAt: 1 };
+        } else {
+            sortObj = { createdAt: -1 };
+        }
 
         const pipeline = [
             ...(Object.keys(matchStage).length ? [{ $match: matchStage }] : []),
@@ -202,7 +259,7 @@ app.get('/api/posts', async (req, res) => {
                     }
                 }
             },
-            { $sort: sort === 'popular' ? { popularity: -1, createdAt: -1 } : { createdAt: -1 } },
+            { $sort: sortObj },
             { $project: { commentDocs: 0 } }
         ];
 
@@ -294,6 +351,7 @@ app.delete('/api/posts/:id', async (req, res) => {
         if (!authorId || post.authorId !== authorId) {
             return res.status(403).json({ message: 'Bu yazıyı silme yetkiniz yok.' });
         }
+        await Comment.deleteMany({ postId: req.params.id });
         await Post.findByIdAndDelete(req.params.id);
         res.status(204).send();
     } catch (error) {
@@ -321,9 +379,15 @@ app.post('/api/posts/:id/comments', async (req, res) => {
     }
 });
 
-// 10. Yorum Silme
+// 10. Yorum Silme (yalnızca yorum sahibi)
 app.delete('/api/comments/:id', async (req, res) => {
     try {
+        const authorId = req.query.authorId;
+        const comment = await Comment.findById(req.params.id);
+        if (!comment) return res.status(404).json({ message: 'Yorum bulunamadı.' });
+        if (!authorId || comment.authorId !== authorId) {
+            return res.status(403).json({ message: 'Bu yorumu silme yetkiniz yok.' });
+        }
         await Comment.findByIdAndDelete(req.params.id);
         res.status(204).send();
     } catch (error) {

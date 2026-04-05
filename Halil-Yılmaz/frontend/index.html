@@ -20,7 +20,7 @@
         .navbar {
             position: sticky;
             top: 0;
-            z-index: 200;
+            z-index: 5000;
             min-height: 64px;
             padding: 12px 24px;
             display: flex;
@@ -30,7 +30,8 @@
             flex-wrap: wrap;
             border-bottom: 1px solid rgba(148, 163, 184, 0.15);
             background: linear-gradient(165deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
-            overflow: hidden;
+            overflow: visible;
+            isolation: isolate;
         }
         .navbar-inner {
             position: relative;
@@ -42,6 +43,44 @@
             gap: 16px;
             flex-wrap: wrap;
         }
+        .nav-search-wrap {
+            flex: 1 1 200px;
+            max-width: 360px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 4;
+        }
+        .nav-search-wrap input[type="search"] {
+            flex: 1;
+            min-width: 0;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(147, 197, 253, 0.35);
+            background: rgba(15, 23, 42, 0.5);
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .nav-search-wrap input::placeholder { color: #64748b; }
+        .nav-search-wrap input:focus {
+            outline: none;
+            border-color: rgba(147, 197, 253, 0.65);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+        .nav-search-wrap button {
+            padding: 9px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(147, 197, 253, 0.45);
+            background: rgba(59, 130, 246, 0.35);
+            color: #f8fafc;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .nav-search-wrap button:hover { background: rgba(59, 130, 246, 0.5); }
         .sky-layer {
             position: absolute;
             inset: 0;
@@ -134,7 +173,7 @@
         .nav-left { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; z-index: 3; }
         .nav-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; z-index: 3; }
 
-        .nav-dropdown { position: relative; }
+        .nav-dropdown { position: relative; z-index: 6000; }
         .nav-dd-btn {
             background: rgba(15, 23, 42, 0.35);
             border: 1px solid rgba(147, 197, 253, 0.35);
@@ -162,7 +201,7 @@
             border-radius: 12px;
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
             padding: 8px 0;
-            z-index: 300;
+            z-index: 8000;
         }
         .nav-dropdown:hover .nav-dd-panel { display: block; }
         .nav-dd-panel button {
@@ -200,6 +239,18 @@
             color: white;
         }
         .btn-nav-primary:hover { box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45); }
+
+        .btn-nav-assistant {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-robot-icon {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 0 4px rgba(147, 197, 253, 0.5));
+        }
 
         .profile-pic { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(147, 197, 253, 0.7); cursor: pointer; transition: 0.3s; }
         .profile-pic:hover { transform: scale(1.06); box-shadow: 0 0 14px rgba(59, 130, 246, 0.5); }
@@ -300,13 +351,67 @@
         }
         .modal-close:hover { color: #f8fafc; }
 
-        .hero { text-align: center; padding: 70px 20px; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #1e293b; }
-        .hero h2 { font-size: 38px; margin-bottom: 10px; color: #f8fafc; font-family: 'Outfit', sans-serif; }
-        .hero p { color: #94a3b8; font-size: 18px; margin-bottom: 25px; }
-        .btn-write { background: #8b5cf6; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; font-family: inherit; }
+        .hero {
+            text-align: center;
+            padding: 22px 16px 20px;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid #1e293b;
+            position: relative;
+            z-index: 0;
+        }
+        .hero h2 { font-size: 1.35rem; margin: 0 0 6px; color: #f8fafc; font-family: 'Outfit', sans-serif; line-height: 1.25; }
+        .hero p { color: #94a3b8; font-size: 14px; margin: 0 0 14px; line-height: 1.45; }
+        .btn-write { background: #8b5cf6; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; font-family: inherit; }
         .btn-write:hover { background: #7c3aed; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.5); }
 
-        .container { max-width: 1160px; margin: 40px auto; padding: 0 15px; }
+        .container { max-width: 1160px; margin: 24px auto 32px; padding: 0 15px; }
+
+        .site-footer {
+            margin-top: 48px;
+            border-top: 1px solid rgba(71, 85, 105, 0.55);
+            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            color: #cbd5e1;
+            padding: 28px 20px 22px;
+        }
+        .footer-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 28px 24px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .footer-inner { grid-template-columns: 1fr; }
+        }
+        .footer-brand { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; margin: 0 0 10px; color: #f8fafc; }
+        .footer-tagline { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: #94a3b8; max-width: 320px; }
+        .footer-social { display: flex; gap: 12px; margin-bottom: 16px; }
+        .footer-social a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(71, 85, 105, 0.7);
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        }
+        .footer-social a:hover { background: rgba(59, 130, 246, 0.25); border-color: rgba(147, 197, 253, 0.45); transform: translateY(-2px); }
+        .footer-social svg { width: 20px; height: 20px; fill: currentColor; }
+        .footer-copy { margin: 0; font-size: 12px; color: #64748b; }
+        .footer-links { display: flex; flex-direction: column; gap: 10px; }
+        .footer-links a {
+            color: #93c5fd;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .footer-links a:hover { text-decoration: underline; color: #bfdbfe; }
+        .footer-col-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin: 0 0 12px; font-weight: 700; }
         .posts-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -404,8 +509,13 @@
                         <button type="button" data-topic="devops" data-label="DevOps">DevOps</button>
                         <button type="button" data-topic="ag-teknolojileri" data-label="Ağ Teknolojileri">Ağ Teknolojileri</button>
                         <button type="button" data-topic="veritabani" data-label="Veritabanları">Veritabanları</button>
+                        <button type="button" data-topic="robotik" data-label="Robotik">Robotik</button>
                     </div>
                 </div>
+            </div>
+            <div class="nav-search-wrap">
+                <input type="search" id="navSearch" placeholder="Yazılarda ara (örn. yapay zeka)" autocomplete="off" aria-label="Yazılarda ara">
+                <button type="button" onclick="runSearch()">Ara</button>
             </div>
             <div class="nav-actions" id="navActions"></div>
         </div>
@@ -439,8 +549,9 @@
             <div class="feed-sort">
                 <label for="sortSelect">Sıralama</label>
                 <select id="sortSelect" aria-label="Sıralama">
-                    <option value="popular" selected>Popülerlik (beğeni + favori + yorum)</option>
-                    <option value="recent">En güncel → en eski</option>
+                    <option value="popular" selected>Popülerlik</option>
+                    <option value="recent">Güncel</option>
+                    <option value="oldest">En Eski</option>
                 </select>
             </div>
         </div>
@@ -449,23 +560,82 @@
         </div>
     </div>
 
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div>
+                <p class="footer-brand">BlogicodeAI</p>
+                <p class="footer-tagline">IT alanındaki en yeni ve popüler gelişmeler için takipte kalın ❤️</p>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                    <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                </div>
+                <p class="footer-copy">2026 ISERA © Tüm Hakları Saklıdır.</p>
+            </div>
+            <div>
+                <p class="footer-col-title">Kurumsal</p>
+                <nav class="footer-links" aria-label="Kurumsal bağlantılar">
+                    <a href="mailto:info@blogicodeai.com">İletişim</a>
+                    <a href="#gizlilik">Gizlilik Politikası</a>
+                    <a href="#kullanim">Kullanım Şartları</a>
+                </nav>
+            </div>
+            <div>
+                <p class="footer-col-title">Keşfet</p>
+                <nav class="footer-links" aria-label="Site bağlantıları">
+                    <a href="index.html">Anasayfa</a>
+                    <a href="index.html" onclick="tryEditorPick(event)">Editörlerin Seçimi</a>
+                    <a href="#hakkimizda">Hakkımızda</a>
+                </nav>
+            </div>
+        </div>
+        <div id="gizlilik" style="max-width:1160px;margin:20px auto 0;padding:0 20px;font-size:13px;color:#64748b;line-height:1.5;">
+            <strong style="color:#94a3b8;">Gizlilik Politikası:</strong> Toplanan veriler yalnızca hizmeti sunmak ve güvenliği sağlamak için kullanılır; üçüncü taraflarla paylaşılmaz.
+        </div>
+        <div id="kullanim" style="max-width:1160px;margin:12px auto 0;padding:0 20px;font-size:13px;color:#64748b;line-height:1.5;">
+            <strong style="color:#94a3b8;">Kullanım Şartları:</strong> Platformu kötüye kullanmak, yasadışı içerik paylaşmak veya diğer kullanıcıları rahatsız etmek yasaktır.
+        </div>
+        <div id="hakkimizda" style="max-width:1160px;margin:12px auto 0;padding:0 20px 8px;font-size:13px;color:#64748b;line-height:1.5;">
+            <strong style="color:#94a3b8;">Hakkımızda:</strong> BlogicodeAI, teknoloji ve yapay zeka odaklı içerik üreticilerinin buluşma noktasıdır.
+        </div>
+    </footer>
+
     <script src="config.js"></script>
     <script>
         const apiUrl = window.BLOGICODE_API_BASE;
+        const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/notionists-neutral/svg?seed=blogicode-unisex';
         let userId = localStorage.getItem('userId');
         const navActions = document.getElementById('navActions');
         const feedHeading = document.getElementById('feedHeading');
         const sortSelect = document.getElementById('sortSelect');
         let selectedTopic = '';
         let selectedTopicLabel = '';
+        let searchQuery = '';
         let modalLoginMode = true;
 
-        function renderNav() {
+        async function renderNav() {
             userId = localStorage.getItem('userId');
             if (userId) {
-                const picUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + userId;
+                let picUrl = DEFAULT_AVATAR;
+                try {
+                    const res = await fetch(apiUrl + '/users/' + userId);
+                    const data = await res.json();
+                    const u = data.user;
+                    if (u && u.profilePhoto && String(u.profilePhoto).trim()) {
+                        picUrl = String(u.profilePhoto).trim();
+                    }
+                } catch (e) { /* varsayılan avatar */ }
                 navActions.innerHTML = `
-                    <button type="button" class="btn-nav" onclick="goAssistant()">AI Asistan</button>
+                    <button type="button" class="btn-nav btn-nav-assistant" onclick="goAssistant()">
+                        <img src="robot-celik.svg" alt="" class="nav-robot-icon" width="22" height="22">
+                        <span>AI Asistan</span>
+                    </button>
                     <div class="nav-dropdown align-end">
                         <button type="button" class="nav-dd-btn user-dd-trigger">
                             <img src="${picUrl}" class="user-dd-avatar" alt="">
@@ -480,7 +650,10 @@
                 `;
             } else {
                 navActions.innerHTML = `
-                    <button type="button" class="btn-nav" onclick="goAssistant()">AI Asistan</button>
+                    <button type="button" class="btn-nav btn-nav-assistant" onclick="goAssistant()">
+                        <img src="robot-celik.svg" alt="" class="nav-robot-icon" width="22" height="22">
+                        <span>AI Asistan</span>
+                    </button>
                     <button type="button" class="btn-nav btn-nav-primary" onclick="openAuthModal()">Giriş Yap / Kayıt Ol</button>
                 `;
             }
@@ -495,13 +668,40 @@
         }
 
         function updateFeedTitle() {
-            if (selectedTopic) {
-                feedHeading.innerHTML = '📂 ' + selectedTopicLabel;
+            if (searchQuery) {
+                feedHeading.innerHTML = '🔍 “' + escapeHtml(searchQuery) + '” için sonuçlar';
                 return;
             }
-            feedHeading.innerHTML = sortSelect.value === 'popular'
-                ? '⭐ Popüler yazılar'
-                : '🔥 En güncel akış';
+            if (selectedTopic) {
+                feedHeading.innerHTML = '📂 ' + escapeHtml(selectedTopicLabel);
+                return;
+            }
+            const s = sortSelect.value;
+            if (s === 'popular') feedHeading.innerHTML = '⭐ Popüler yazılar';
+            else if (s === 'oldest') feedHeading.innerHTML = '📜 En eski yazılar';
+            else feedHeading.innerHTML = '🔥 Güncel yazılar';
+        }
+
+        function runSearch() {
+            const input = document.getElementById('navSearch');
+            searchQuery = (input && input.value ? input.value : '').trim();
+            selectedTopic = '';
+            selectedTopicLabel = '';
+            updateFeedTitle();
+            loadPosts();
+        }
+
+        function tryEditorPick(ev) {
+            if (ev) ev.preventDefault();
+            sortSelect.value = 'popular';
+            selectedTopic = '';
+            selectedTopicLabel = '';
+            searchQuery = '';
+            const ns = document.getElementById('navSearch');
+            if (ns) ns.value = '';
+            updateFeedTitle();
+            loadPosts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function goAssistant() {
@@ -592,7 +792,7 @@
                         localStorage.setItem('userToken', data.token);
                         localStorage.setItem('userId', data.user._id);
                         closeAuthModal();
-                        renderNav();
+                        renderNav().catch(() => {});
                         loadPosts();
                     } else {
                         messageText.textContent = 'Kayıt başarılı! Giriş yapabilirsiniz.';
@@ -612,9 +812,19 @@
             btn.addEventListener('click', () => {
                 selectedTopic = btn.getAttribute('data-topic') || '';
                 selectedTopicLabel = btn.getAttribute('data-label') || '';
+                searchQuery = '';
+                const ns = document.getElementById('navSearch');
+                if (ns) ns.value = '';
                 updateFeedTitle();
                 loadPosts();
             });
+        });
+
+        document.getElementById('navSearch').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearch();
+            }
         });
 
         sortSelect.addEventListener('change', () => {
@@ -715,9 +925,12 @@
             feedDiv.innerHTML = '<p>Yükleniyor...</p>';
             const uid = localStorage.getItem('userId');
             const logged = !!uid;
-            const sort = sortSelect.value === 'popular' ? 'popular' : 'recent';
+            let sort = 'recent';
+            if (sortSelect.value === 'popular') sort = 'popular';
+            else if (sortSelect.value === 'oldest') sort = 'oldest';
             let url = apiUrl + '/posts?sort=' + encodeURIComponent(sort);
             if (selectedTopic) url += '&topic=' + encodeURIComponent(selectedTopic);
+            if (searchQuery) url += '&q=' + encodeURIComponent(searchQuery);
 
             try {
                 const response = await fetch(url);
@@ -793,8 +1006,8 @@
             return d.innerHTML;
         }
 
-        renderNav();
-        window.addEventListener('storage', () => renderNav());
+        renderNav().catch(() => {});
+        window.addEventListener('storage', () => { renderNav().catch(() => {}); });
 
         window.onload = () => {
             updateFeedTitle();
