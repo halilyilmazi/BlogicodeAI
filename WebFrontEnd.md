@@ -1,10 +1,8 @@
 # Web Frontend — BlogicodeAI
 
-**Canlı web arayüzü (domain):**  [https://www.blogicodeai.com]
+**Web Frontend Adresi:**  [https://www.blogicodeai.com]
 
-*(Canlı REST API: `https://blogicode-ai.vercel.app/api` — `config.js` canlıda bu tabanı kullanır.)*
-
-**Yerel:** `http://127.0.0.1:3000/`
+**Frontend Test Videosu:** [https://youtu.be/GPNGHeMwLbo]
 
 ---
 
