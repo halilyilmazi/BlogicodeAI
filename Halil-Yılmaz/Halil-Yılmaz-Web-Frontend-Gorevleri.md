@@ -23,7 +23,7 @@
 
 ---
 
-## Video altı — kısa detay (her madde)
+## Kısa detay (her madde)
 
 1. **Kayıt:** Modal veya `login.html` kayıt sekmesi; başarı/hata mesajı.  
 2. **Giriş:** `localStorage`’a `userId` yazılır; Keşfet güncellenir.  
