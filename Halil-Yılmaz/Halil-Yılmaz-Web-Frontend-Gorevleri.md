@@ -38,5 +38,3 @@
 11. **Asistan:** Mesaj gönderme; `200` ve `reply` (Gemini veya yerel mod).
 
 ---
-
-*Video girişi örneği: “Ben Halil Yılmaz; web tarafında 11 gereksinimin tamamını bağladım.” (Grup çalışmasıysa sadece kendi frontend payını söyle.)*
