@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Blogicode.API.Controllers;
 
+/// <summary>
+/// Manages user profiles and retrieves per-user activity (posts, likes, favorites, comments).
+/// </summary>
 [ApiController]
 [Route("api/users")]
 public class UsersController : ControllerBase
@@ -13,35 +16,65 @@ public class UsersController : ControllerBase
 
     public UsersController(IUserService users) => _users = users;
 
+    /// <summary>
+    /// Returns a list of all registered users.
+    /// </summary>
+    /// <returns>200 with an array of public user objects.</returns>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ListAll()
     {
         var list = await _users.ListUsersAsync();
         return Ok(list);
     }
 
+    /// <summary>
+    /// Returns the posts that a user has marked as favorites.
+    /// </summary>
+    /// <param name="id">MongoDB ObjectId of the user.</param>
+    /// <returns>200 with an array of favorited post objects.</returns>
     [HttpGet("{id}/favorites")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Favorites(string id)
     {
         var data = await _users.GetFavoritesAsync(id);
         return Ok(new { data });
     }
 
+    /// <summary>
+    /// Returns the posts that a user has liked.
+    /// </summary>
+    /// <param name="id">MongoDB ObjectId of the user.</param>
+    /// <returns>200 with an array of liked post objects.</returns>
     [HttpGet("{id}/likes")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Likes(string id)
     {
         var data = await _users.GetLikesAsync(id);
         return Ok(new { data });
     }
 
+    /// <summary>
+    /// Returns all comments written by a specific user.
+    /// </summary>
+    /// <param name="id">MongoDB ObjectId of the user.</param>
+    /// <returns>200 with an array of comment objects enriched with post titles.</returns>
     [HttpGet("{id}/comments")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UserComments(string id)
     {
         var data = await _users.GetUserCommentsAsync(id);
         return Ok(new { data });
     }
 
+    /// <summary>
+    /// Returns a user's public profile together with their published posts.
+    /// </summary>
+    /// <param name="id">MongoDB ObjectId of the user.</param>
+    /// <returns>200 with the user object and their posts, or 404 if the user does not exist.</returns>
     [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(string id)
     {
         var (user, posts) = await _users.GetUserWithPostsAsync(id);
@@ -51,7 +84,15 @@ public class UsersController : ControllerBase
         return Ok(new { user, posts = postDtos });
     }
 
+    /// <summary>
+    /// Updates a user's profile information.
+    /// </summary>
+    /// <param name="id">MongoDB ObjectId of the user to update.</param>
+    /// <param name="body">Fields to update: username, bio, profilePhoto, firstName, lastName, profession, gender, birthDate.</param>
+    /// <returns>200 with the updated user object, or 404 if the user does not exist.</returns>
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Put(string id, [FromBody] UpdateUserRequest body)
     {
         var updated = await _users.UpdateUserAsync(id, body);
@@ -60,7 +101,14 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Profil başarıyla güncellendi", user = updated });
     }
 
+    /// <summary>
+    /// Permanently deletes a user account and all associated data.
+    /// </summary>
+    /// <param name="id">MongoDB ObjectId of the user to delete.</param>
+    /// <returns>204 on success, or 500 if the deletion fails.</returns>
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(string id)
     {
         var ok = await _users.DeleteUserAsync(id);

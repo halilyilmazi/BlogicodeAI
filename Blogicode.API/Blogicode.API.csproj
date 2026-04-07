@@ -7,10 +7,13 @@
     <RootNamespace>Blogicode.API</RootNamespace>
     <AssemblyName>Blogicode.API</AssemblyName>
     <UserSecretsId>63433f9a-ae29-4660-b5f3-8f60ac0f6bb9</UserSecretsId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.29.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
   </ItemGroup>
 
 </Project>
