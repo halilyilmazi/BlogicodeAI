@@ -1,8 +1,8 @@
 # REST API — BlogicodeAI
 
-**REST API adresi:** [](https://blogicodeai-production.up.railway.app/swagger)
+**REST API adresi:** (https://blogicodeai-production.up.railway.app/swagger)
 
-**API Test Videosu:** [](https://www.youtube.com/watch?v=hFB8fLDNV9o)
+**API Test Videosu:** (https://www.youtube.com/watch?v=hFB8fLDNV9o)
 
 ---
 
