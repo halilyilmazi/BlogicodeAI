@@ -1,8 +1,8 @@
 # REST API — BlogicodeAI
 
-**Canlı REST API tabanı:** `https://blogicode-ai.vercel.app/api`
+**REST API adresi:** [](https://blogicodeai-production.up.railway.app/swagger)
 
-**Yerel geliştirme:** `http://127.0.0.1:3000/api`
+**API Test Videosu:** [](https://www.youtube.com/watch?v=hFB8fLDNV9o)
 
 ---
 
