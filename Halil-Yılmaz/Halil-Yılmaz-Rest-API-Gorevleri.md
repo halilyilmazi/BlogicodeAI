@@ -13,7 +13,7 @@
 
 ## Canlı API tabanı
 
-**Üretim:** `https://blogicode-ai.vercel.app/api`  
+**Domain:** `(https://blogicodeai-production.up.railway.app/swagger/)`  
 **Yerel:** `http://127.0.0.1:3000/api`
 
 Koleksiyonda `baseUrl` değişkenini buna göre ayarla.
