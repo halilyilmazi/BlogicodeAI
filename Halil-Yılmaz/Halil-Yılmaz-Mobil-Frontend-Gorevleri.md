@@ -1,116 +1,211 @@
 # Halil Yılmaz'ın Mobil Frontend Görevleri
-**Mobile Front-end Demo Videosu:** [Link buraya eklenecek](https://example.com)
 
-## 1. Üye Olma (Kayıt) Ekranı
+**Platform:** React Native (Expo) + TypeScript  
+**Proje Konumu:** `Halil-Yılmaz/mobile/`  
+**Expo SDK:** ~56.0.12  
+
+---
+
+## Uygulama Ekranları ve Navigasyon
+
+### Navigasyon Yapısı
+```
+Stack Navigator (Root)
+├── LoginScreen        (Giriş Yap)
+├── RegisterScreen     (Kayıt Ol)
+└── MainTabs (Bottom Tab Navigator)
+    ├── HomeScreen         (Keşfet - Blog Akışı)
+    ├── CreatePostScreen   (Yaz - Yeni Yazı)
+    ├── ChatbotScreen      (AI Asistan)
+    └── ProfileScreen      (Profil)
+        └── EditProfileScreen  (Profili Düzenle — Stack)
+        └── PostDetailScreen   (Yazı Detay — Stack)
+```
+
+---
+
+## 1. Üye Olma (Kayıt) Ekranı — `RegisterScreen.tsx`
 - **API Endpoint:** `POST /auth/register`
-- **Görev:** Kullanıcı kayıt işlemi için mobil ekran tasarımı ve implementasyonu
 - **UI Bileşenleri:**
-  - Email input alanı (keyboard type: email)
-  - Şifre input alanı (secure text entry, şifre gücü göstergesi)
-  - Şifre tekrar input alanı (doğrulama için)
-  - Ad (firstName) input alanı
-  - Soyad (lastName) input alanı
-  - "Kayıt Ol" butonu
+  - Ad / Soyad input (yan yana, satır düzeni)
+  - Email input (keyboard type: email)
+  - Şifre input (secure text entry + göz ikonu)
+  - Şifre tekrar input
+  - Şifre güç göstergesi (5 segmentli renk çubuğu: Zayıf / Orta / Güçlü)
+  - "Kayıt Ol" butonu (disabled — tüm alanlar dolmadan)
   - "Zaten hesabınız var mı? Giriş Yap" linki
-  - Loading indicator (kayıt işlemi sırasında)
+  - Loading indicator (kayıt sırasında)
 - **Form Validasyonu:**
-  - Email format kontrolü (real-time validation)
-  - Şifre güvenlik kuralları (min 8 karakter, büyük/küçük harf, rakam)
+  - Email format kontrolü (real-time)
+  - Şifre: min 8 karakter, büyük harf, rakam
   - Şifre eşleşme kontrolü
-  - Ad ve soyad boş olamaz kontrolü
-  - Tüm alanlar doldurulmadan buton disabled
-- **Kullanıcı Deneyimi:**
-  - Form hatalarını alan altında gösterilmesi
-  - Başarılı kayıt sonrası success mesajı ve otomatik giriş ekranına yönlendirme
-  - Hata durumlarında kullanıcı dostu mesajlar (409 Conflict: "Bu email zaten kullanılıyor")
-  - Keyboard dismiss işlevi
-  - ScrollView kullanımı (klavye açıldığında içerik kaybolmasın)
-- **Teknik Detaylar:**
-  - Platform: Android (Jetpack Compose/XML) veya iOS (SwiftUI/UIKit)
-  - State management (form state, loading state, error state)
-  - Navigation (kayıt ekranından giriş ekranına geçiş)
-  - Accessibility desteği (content descriptions, labels)
+  - Ad/soyad boş olamaz
+- **UX:**
+  - Hata mesajları alan altında (kırmızı)
+  - ScrollView + KeyboardAvoidingView
+  - 409 Conflict → "Bu email zaten kullanılıyor"
 
-## 2. Kullanıcı Profil Görüntüleme Ekranı
-- **API Endpoint:** `GET /users/{userId}`
-- **Görev:** Kullanıcı profil bilgilerini görüntüleme ekranı tasarımı ve implementasyonu
-- **UI Bileşenleri:**
-  - Profil fotoğrafı alanı (placeholder veya gerçek fotoğraf)
-  - Kullanıcı adı ve soyadı (büyük başlık)
-  - Email adresi (ikonlu)
-  - Telefon numarası (ikonlu, varsa)
-  - Hesap oluşturulma tarihi
-  - "Profili Düzenle" butonu
-  - "Hesabı Sil" butonu (kırmızı, alt kısımda)
-  - Pull-to-refresh özelliği
-- **Kullanıcı Deneyimi:**
-  - Loading skeleton screen (veri yüklenirken)
-  - Empty state (veri yoksa)
-  - Error state (yükleme hatası durumunda retry butonu)
-  - Smooth scroll animasyonları
-  - Profil fotoğrafı için placeholder avatar
-- **Teknik Detaylar:**
-  - Lazy loading (büyük profil fotoğrafları için)
-  - Image caching
-  - State management (user data, loading, error states)
-  - Navigation (profil düzenleme ekranına geçiş)
-  - Deep linking desteği (profil paylaşımı için)
+---
 
-## 3. Kullanıcı Profil Düzenleme Ekranı
-- **API Endpoint:** `PUT /users/{userId}`
-- **Görev:** Kullanıcı profil bilgilerini düzenleme ekranı tasarımı ve implementasyonu
+## 2. Giriş Yapma Ekranı — `LoginScreen.tsx`
+- **API Endpoint:** `POST /auth/login`
 - **UI Bileşenleri:**
-  - Profil fotoğrafı düzenleme (seçme/değiştirme butonu)
-  - Ad (firstName) input alanı (mevcut değerle dolu)
-  - Soyad (lastName) input alanı (mevcut değerle dolu)
-  - Email input alanı (mevcut değerle dolu, düzenlenebilir)
-  - Telefon numarası input alanı (mevcut değerle dolu, format maskesi)
-  - "Kaydet" butonu (sağ üst köşe veya alt kısımda)
-  - "İptal" butonu (sol üst köşe)
-  - Değişiklik yapıldığında "Kaydet" butonu aktif olur
+  - Email / Şifre input
+  - Göz ikonu (şifre göster/gizle)
+  - "Giriş Yap" butonu
+  - "Hesabınız yok mu? Kayıt Ol" linki
+  - Loading indicator
+- **UX:**
+  - Real-time alan validasyonu
+  - Hatalı giriş için Alert
+
+---
+
+## 3. Blog Akışı (Ana Sayfa) — `HomeScreen.tsx`
+- **API Endpoint:** `GET /posts`
+- **UI Bileşenleri:**
+  - Arama çubuğu (live search)
+  - Sıralama filtreleri: Yeni / Popüler / Eski (yatay scroll chip)
+  - Kategori filtreleri: Tümü / Yazılım / Yapay Zeka / Teknoloji / İnovasyon
+  - Blog yazısı kartları (FlatList):
+    - Kategori badge + tarih
+    - Başlık + içerik önizleme
+    - Yazar avatarı + adı + beğeni/favori sayısı
+  - Pull-to-refresh
+  - Loading indicator / Empty state / Error state (Retry butonu)
+- **UX:**
+  - Yazıya tıklayınca PostDetailScreen'e git
+  - Smooth scroll, lazy loading
+
+---
+
+## 4. Yazı Detay Ekranı — `PostDetailScreen.tsx`
+- **API Endpoint:** `GET /posts/:id/comments`, `POST /posts/:id/react`, `DELETE /posts/:id`
+- **UI Bileşenleri:**
+  - Kategori badge + tarih
+  - Başlık + yazar bilgisi (avatar + isim)
+  - Etiket listesi
+  - Yazı içeriği (tam metin)
+  - Beğeni butonu (toggle, sayaçlı)
+  - Yorumlar bölümü:
+    - Yorum ekleme alanı + Gönder butonu
+    - Yorum kartları (yazar, tarih, içerik, sil butonu)
+  - Yazar ise → Yazıyı Sil butonu
+- **UX:**
+  - KeyboardAvoidingView (yorum yazarken)
+  - Kendi yorumlarını silebilme (onay dialog'u)
+  - Yazıyı sil → Ana sayfaya dön
+
+---
+
+## 5. Yeni Yazı Oluşturma — `CreatePostScreen.tsx`
+- **API Endpoint:** `POST /posts`
+- **UI Bileşenleri:**
+  - Başlık input (max 150 karakter, sayaç)
+  - Kategori seçici (yatay scroll chip)
+  - İçerik alanı (multiline, min 50 karakter)
+  - Etiket ekleme (max 5, badge ile gösterim, tıklayınca kaldır)
+  - "Yayınla" butonu (disabled — validasyon geçmeden)
 - **Form Validasyonu:**
-  - Email format kontrolü
-  - Telefon numarası format kontrolü (ülke kodu desteği)
-  - Real-time validation feedback
-  - Değişiklik yoksa "Kaydet" butonu disabled
-- **Kullanıcı Deneyimi:**
-  - Optimistic update (kaydet butonuna basıldığında UI anında güncellenir)
-  - Başarılı güncelleme sonrası success snackbar/toast
-  - Hata durumunda error mesajı ve değişiklikler geri alınır
-  - "İptal" butonuna basıldığında değişiklik kaybı için onay dialog'u
-  - Keyboard dismiss işlevi
-- **Teknik Detaylar:**
-  - Form state management (initial values, edited values)
-  - Image picker entegrasyonu (galeri/kamera)
-  - Image compression (upload için)
-  - Navigation (geri dönüş, kaydetme sonrası profil ekranına dönüş)
-  - Unsaved changes warning
+  - Başlık min 5 karakter
+  - İçerik min 50 karakter
+- **UX:**
+  - Başarılı yayın → Alert + form sıfırlanır
 
-## 4. Hesap Silme Akışı
-- **API Endpoint:** `DELETE /users/{userId}`
-- **Görev:** Kullanıcı hesabını silme işlemi için UI akışı tasarımı ve implementasyonu
+---
+
+## 6. Kullanıcı Profil Görüntüleme — `ProfileScreen.tsx`
+- **API Endpoint:** `GET /users/{id}`
 - **UI Bileşenleri:**
-  - "Hesabı Sil" butonu (profil ekranında, kırmızı renkli)
-  - Onay dialog'u (destructive action için)
-  - Şifre doğrulama ekranı (güvenlik için opsiyonel)
-  - Son onay ekranı (uyarı mesajları ile)
-  - "Emin misiniz?" dialog'u (çift onay mekanizması)
-- **Kullanıcı Deneyimi:**
-  - Destructive action için görsel uyarılar (kırmızı renk, ikonlar)
-  - Açık ve net uyarı mesajları ("Bu işlem geri alınamaz")
-  - İptal seçeneği her zaman mevcut
-  - Silme işlemi sırasında loading indicator
-  - Başarılı silme sonrası logout ve login ekranına yönlendirme
-- **Akış Adımları:**
-  1. Profil ekranında "Hesabı Sil" butonuna tıklama
-  2. İlk uyarı dialog'u gösterilmesi
-  3. Onaylandığında şifre doğrulama (opsiyonel)
-  4. Son onay ekranı (detaylı uyarılar)
-  5. Silme işlemi gerçekleştirme
-  6. Başarılı silme sonrası logout ve login ekranına yönlendirme
-- **Teknik Detaylar:**
-  - Dialog/Modal component kullanımı
-  - Multi-step flow yönetimi
-  - Error handling (silme başarısız olursa)
-  - Logout işlemi entegrasyonu
-  - Navigation reset (login ekranına dönüş)
+  - Avatar (baş harfler, mor çember)
+  - Ad, soyad, kullanıcı adı, biyografi
+  - Email, meslek, katılım tarihi (ikonlu)
+  - "Profili Düzenle" butonu + "Çıkış Yap" ikonu
+  - Kullanıcının yazıları (kart listesi, sil butonu)
+  - "Hesabı Kalıcı Olarak Sil" butonu (kırmızı, alt kısım)
+  - Pull-to-refresh
+- **UX:**
+  - Loading / Error / Empty state
+  - Çıkış için onay dialog'u
+
+---
+
+## 7. Profil Düzenleme — `EditProfileScreen.tsx`
+- **API Endpoint:** `PUT /users/{id}`
+- **UI Bileşenleri:**
+  - Ad / Soyad (zorunlu)
+  - Kullanıcı adı, meslek, telefon, biyografi (opsiyonel)
+  - Email → salt okunur (değiştirilemez)
+  - "Kaydet" butonu (sağ üst, değişiklik olmadan disabled)
+  - "X" (iptal) butonu (sol üst)
+  - Karakter sayacı (biyografi, max 200)
+- **UX:**
+  - Değişiklik yokken "Kaydet" disabled
+  - İptal + değişiklik varsa → "Değişiklikler kaydedilmedi" onay dialog'u
+  - Başarılı güncelleme → Alert + geri dön
+
+---
+
+## 8. Hesap Silme Akışı — `ProfileScreen.tsx` içinde
+- **API Endpoint:** `DELETE /users/{id}`
+- **Akış (çift onay):**
+  1. "Hesabı Kalıcı Olarak Sil" butonuna basılır
+  2. Alert 1: "Hesabınızı silmek istediğinize emin misiniz?"
+  3. Alert 2: "Tüm yazılar ve yorumlar silinecek, devam edilsin mi?"
+  4. API çağrısı → Başarılı → signOut() → Login ekranına dönüş
+- **UX:**
+  - Kırmızı renkli destructive buton
+  - İki aşamalı onay mekanizması
+
+---
+
+## 9. AI Asistan (Chatbot) — `ChatbotScreen.tsx`
+- **API Endpoint:** `POST /chatbot`
+- **UI Bileşenleri:**
+  - Bot bilgi çubuğu (avatar, isim, durum)
+  - Mesaj baloncukları (kullanıcı sağ, bot sol)
+  - Öneri butonları (ilk açılışta 4 adet)
+  - Metin giriş alanı + Gönder butonu
+  - "Yanıt yazılıyor..." indikatörü
+- **UX:**
+  - Mesaj gönderilince otomatik scroll aşağı
+  - Öneri butonuna basınca direkt mesaj gönderilir
+  - Hata durumunda bot olarak hata mesajı gösterilir
+
+---
+
+## Kullanılan Kütüphaneler
+
+| Kütüphane | Amaç |
+|-----------|------|
+| `@react-navigation/native` + `native-stack` + `bottom-tabs` | Sayfa navigasyonu |
+| `axios` | HTTP istekleri |
+| `@react-native-async-storage/async-storage` | Token/kullanıcı saklama |
+| `@expo/vector-icons` (Ionicons) | İkonlar |
+| `expo-status-bar` | Durum çubuğu |
+| `react-native-safe-area-context` | Güvenli alan (notch, çentik) |
+| `react-native-screens` | Native ekran performansı |
+
+---
+
+## Genel Frontend Prensipleri Uygulaması
+
+- **Renk Paleti:** `#0f172a` (arka plan), `#1e293b` (kart), `#6366f1` (primary), `#e2e8f0` (metin)
+- **Tipografi:** System font, okunabilir boyutlar (12–24px arası hiyerarşi)
+- **Loading States:** ActivityIndicator ve skeleton-benzeri boş durumlar
+- **Error Handling:** Alert dialog + retry butonu
+- **Empty States:** İkon + açıklayıcı metin
+- **Feedback:** Alert, disabled buton, real-time validasyon
+- **Erişilebilirlik:** Minimum 44dp dokunma alanı, yüksek kontrast
+- **Keyboard Handling:** KeyboardAvoidingView + ScrollView her form ekranında
+
+---
+
+## Kanıt Videosu
+
+**Gereksinim:** Mobil Frontend (React Native Expo)
+
+> Videoda Halil Yılmaz adını ve gereksinim adını söyleyerek uygulamayı Expo Go üzerinden gösterir.
+> Tüm ekranlar arası geçiş, form validasyonu, loading state ve error handling gösterilmelidir.
+
+**Video Linki:** [Video linki buraya eklenecek]

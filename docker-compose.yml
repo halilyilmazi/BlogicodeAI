@@ -1,0 +1,35 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: blogicode-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./Blogicode.API
+      dockerfile: Dockerfile
+    container_name: blogicode-api
+    ports:
+      - "5000:8080"
+    environment:
+      - MongoDb__ConnectionString=mongodb://mongo:27017
+      - MongoDb__DatabaseName=blogicode
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mobile:
+    build:
+      context: ./Halil-Yılmaz/mobile
+      dockerfile: Dockerfile
+    container_name: blogicode-mobile
+    ports:
+      - "19006:80"
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
