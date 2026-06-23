@@ -550,54 +550,175 @@ function appendGroundingSources(text, response) {
     return text;
 }
 
+/**
+ * Güncel teknoloji & inovasyon başlıkları için zengin, bilgilendirici yanıtlar.
+ * Canlı arama olmadan da anlamlı kalan (evergreen) tematik özetler.
+ */
+const INNOVATION_TOPICS = [
+    {
+        rx: /uretken|generative|\bllm\b|chatgpt|\bgpt\b|gemini|claude|dil modeli|buyuk dil/i,
+        reply: `**Üretken yapay zeka (Generative AI)** şu an teknolojinin en hızlı büyüyen alanı:
+• **Büyük dil modelleri (LLM):** GPT, Gemini, Claude gibi modeller metin, kod ve fikir üretiminde çok güçlü.
+• **Çok modluluk (multimodal):** Tek bir model artık metin + görsel + ses + video anlayıp üretebiliyor.
+• **AI ajanları:** Kendi başına araç kullanıp çok adımlı görev tamamlayan otonom ajanlar en sıcak başlık.
+• **Kurumsal kullanım:** RAG (kendi verinle konuşan AI), kod asistanları, müşteri desteği otomasyonu.
+
+Hangi yönünü açalım — nasıl çalıştığı mı, nasıl öğrenileceği mi, yoksa bir proje fikri mi?`
+    },
+    {
+        rx: /yapay zeka|\bai\b|makine ogren|machine learning|derin ogren|deep learning|sinir ag|noral|\byz\b/i,
+        reply: `**Yapay zeka** geniş bir alan; ana hatlarıyla:
+• **Makine öğrenmesi:** Veriden örüntü öğrenen modeller (sınıflandırma, tahmin, öneri).
+• **Derin öğrenme:** Çok katmanlı sinir ağları — görüntü, ses ve dilde çığır açtı.
+• **Güncel gündem:** Üretken AI, AI ajanları, küçük ve verimli modeller (on-device AI), AI düzenlemeleri (AB AI Act).
+• **Etik & güvenlik:** Yanlılık, telif, halüsinasyon ve veri gizliliği tartışmaları öne çıkıyor.
+
+İstersen "üretken yapay zeka" veya "yapay zekaya nasıl başlarım" diye sorabilirsin.`
+    },
+    {
+        rx: /robotik|robot\b|otonom|insansi|humanoid|drone|iot|nesnelerin interneti|otomasyon/i,
+        reply: `**Robotik & otonom sistemler** hızla olgunlaşıyor:
+• **İnsansı robotlar:** Depo, üretim ve hizmet senaryolarında pilot uygulamalar artıyor.
+• **Otonom araçlar:** Sürüş asistanı ve robotaksi denemeleri büyüyor.
+• **IoT + Edge AI:** Sensör verisini cihaz üstünde işleyen akıllı sistemler.
+• **Yapay zeka entegrasyonu:** LLM'lerle konuşan, ortamı algılayıp planlayan robotlar.
+
+Hangi tarafı ilgini çekiyor — donanım, kontrol yazılımı yoksa AI beyni?`
+    },
+    {
+        rx: /bulut|cloud|aws|azure|gcp|serverless|sunucusuz|kubernetes|k8s|docker|konteyner|container|devops|ci.?cd/i,
+        reply: `**Bulut & DevOps** modern yazılımın belkemiği:
+• **Konteynerler:** Docker ile paketleme, Kubernetes ile ölçeklenme standart hâline geldi.
+• **Sunucusuz (serverless):** Altyapıyla uğraşmadan fonksiyon çalıştırma (AWS Lambda, Vercel, Cloudflare).
+• **CI/CD:** GitHub Actions, Jenkins ile otomatik test + dağıtım.
+• **Güncel trend:** Platform engineering, FinOps (bulut maliyet yönetimi) ve "AI for DevOps".
+
+Senin projende Docker + Jenkins zaten var — istersen pipeline mantığını birlikte gözden geçirelim.`
+    },
+    {
+        rx: /siber|guvenlik|security|hack|saldiri|sifrele|encryption|zero trust|pentest|fidye|ransomware/i,
+        reply: `**Siber güvenlik** her geçen yıl daha kritik:
+• **Zero Trust:** "Hiçbir şeye baştan güvenme, her erişimi doğrula" yaklaşımı yaygınlaşıyor.
+• **Kimlik & MFA:** Çok faktörlü doğrulama ve passkey'ler parolaların yerini alıyor.
+• **AI iki tarafta da:** Saldırganlar da savunmacılar da yapay zekayı kullanıyor.
+• **Temel hijyen:** Güncellemeler, en az yetki, şifreleme, yedekleme, oltalama (phishing) farkındalığı.
+
+Bunlar genel bilgilendirmedir; kritik bir güvenlik kararı için uzmana danışmanı öneririm.`
+    },
+    {
+        rx: /blockchain|kripto|bitcoin|ethereum|web3|nft|defi|zincir/i,
+        reply: `**Blockchain & Web3** dalgalı ama yenilik üreten bir alan:
+• **Temel fikir:** Merkezi olmayan, değiştirilemez kayıt defteri.
+• **Akıllı sözleşmeler:** Ethereum üzerinde otomatik çalışan kod (DeFi, NFT uygulamaları).
+• **Güncel başlıklar:** Ölçeklenme (Layer-2), enerji verimliliği, düzenlemeler.
+• **Gerçek kullanım:** Tedarik zinciri takibi, kimlik, dijital varlıklar.
+
+Yatırım tavsiyesi vermem; teknolojiyi anlamak istersen seve seve açarım.`
+    },
+    {
+        rx: /\bar\b|\bvr\b|artirilmis|sanal gerceklik|metaverse|kuantum|quantum|uzay|space|yesil|surdurulebil|elektrikli|\bev\b/i,
+        reply: `**Sınırdaki (frontier) teknolojiler** önümüzdeki yılların gündemi:
+• **AR/VR & uzamsal bilişim:** Apple Vision Pro gibi cihazlarla "uzamsal arayüzler".
+• **Kuantum bilişim:** Belirli problemlerde devrim potansiyeli; henüz erken aşama.
+• **Yeşil teknoloji:** Elektrikli araçlar, enerji depolama, veri merkezi verimliliği.
+• **Uzay:** Yeniden kullanılabilir roketler ve uydu internetiyle erişim ucuzluyor.
+
+Hangisini merak ediyorsun? Birini seçersen derinleşelim.`
+    }
+];
+
 /** Gemini yok / hata verince bile sohbet akışı kırılmasın: her zaman anlamlı Türkçe yanıt. */
 function localAssistantReply(userText, history) {
-    const lower = userText.toLowerCase().trim();
+    const trimmed = userText.trim();
+    const lower = trimmed.toLowerCase();
+    // Türkçe karakterleri ASCII'ye indir: kullanıcı "kac", "gun", "nasilsin" yazsa da eşleşsin.
+    const norm = lower
+        .replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i')
+        .replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u').replace(/î/g, 'i');
     const lastModel = [...(history || [])].reverse().find((h) => h && h.role === 'model' && typeof h.text === 'string');
-    const lastModelText = lastModel ? lastModel.text.slice(0, 400) : '';
+    const hasContext = Boolean(lastModel && lastModel.text && lastModel.text.trim());
 
-    if (/^(evet|tamam|olur|peki|evt|eyv)$/i.test(userText.trim())) {
-        return 'Tamam. Önceki konuda devam edelim mi, yoksa yeni bir soru mu sormak istersin?\n\nÖrnek: "REST API nedir?" veya "MongoDB indeks ne işe yarar?"';
+    // --- Kısa onay / ret (bağlama göre) ---
+    if (/^(evet|tamam|olur|peki|evt|eyv|devam|tabii|tabi|aynen)$/.test(norm)) {
+        return hasContext
+            ? 'Süper, devam edelim. Önceki konuyu biraz daha açayım mı, yoksa belirli bir noktaya mı odaklanalım? İstersen örnek de verebilirim.'
+            : 'Tamam! Hangi konuyla başlayalım? Örnek: "Bugün teknolojide neler trend?" veya "REST API nedir?"';
     }
-    if (/^(hayır|hayir|yok|olmaz|maalesef)$/i.test(userText.trim())) {
-        return 'Anladım. Başka bir konuda yardımcı olayım. Ne merak ediyorsun?';
-    }
-
-    if (/merhaba|selam|hey|sa\b|günaydın|iyi günler|iyi akşamlar/i.test(userText)) {
-        return 'Merhaba! BlogicodeAI asistanıyım. Teknoloji, yazılım, yapay zeka veya platformdaki yazılar hakkında konuşabiliriz.\n\nİpucu: Sunucuda GEMINI_API_KEY tanımlıysa yanıtlar Google Gemini ile zenginleşir; tanımlı değilse şu an yerel (akıllı yedek) moddasın — yine de sohbet edebilirsin.';
-    }
-
-    if (/teşekkür|sağol|saol|eyvallah|thanks/i.test(userText)) {
-        return 'Rica ederim. Başka bir sorunda yazman yeterli.';
+    if (/^(hayir|yok|olmaz|maalesef|gerek yok)$/.test(norm)) {
+        return 'Anladım. Başka bir konuda yardımcı olayım — teknoloji, yazılım veya yapay zeka, ne istersen.';
     }
 
-    if (/trend|haber|gündem|guncel|güncel|bugün ne|son dakika/i.test(lower)) {
-        return 'Güncel haber başlıkları için canlı veri kaynağına bağlı değilim (yerel mod). Şunları önerebilirim:\n• BBC News Technology, The Verge, TechCrunch\n• Türkçe: Webtekno, ShiftDelete.Net, Donanım Haber\n\nGenel teknoloji gündeminde sık geçen temalar: büyük dil modelleri ve düzenlemeler, bulut maliyetleri, siber güvenlik olayları, mobil ve açık kaynak ekosistem. Belirli bir ürün veya şirket adı yazarsan o çerçevede bilgi veririm.\n\nTam güncel özet için sunucuya GEMINI_API_KEY + isteğe bağlı GEMINI_ENABLE_SEARCH=true ekleyebilirsin.';
+    // --- Selamlama ---
+    if (/\b(merhaba|selam|hey|sa|slm|alo|hello|hi)\b|gunaydin|iyi (gunler|aksamlar|geceler|sabahlar)/.test(norm)) {
+        return 'Merhaba! 👋 Ben BlogicodeAI asistanıyım. Güncel teknoloji trendleri, yazılım, yapay zeka ve inovasyon dünyası hakkında sohbet edebiliriz.\n\nNe konuşmak istersin? İstersen "Bugün neler trend?" diye başla.';
     }
 
-    if (/nasıl başlarım|nereden başlayım|öğren|kurs|roadmap/i.test(lower)) {
-        return 'Yazılıma başlangıç için pratik bir yol:\n1) Bir dil seç: genelde Python (veri/otomasyon) veya JavaScript (web).\n2) Temel: değişkenler, döngüler, fonksiyonlar, hata ayıklama.\n3) Küçük proje: hesap makinesi, yapılacaklar listesi API’si, basit blog.\n4) Git + GitHub kullanmayı erken öğren.\n\nHangi alan (web, mobil, veri) ilgini çekiyor? Ona göre daraltalım.';
+    // --- Hatır sorma ---
+    if (/nasilsin|naptin|napiyorsun|ne yapiyorsun|keyfin|naber|ne haber/.test(norm)) {
+        return 'İyiyim, teşekkürler! 🤖 Sohbet etmeye ve sorularını yanıtlamaya hazırım. Sen nasılsın? Aklında bir teknoloji konusu var mı?';
     }
 
-    if (/python|javascript|typescript|react|node|java\b|go\b|rust|c\+\+|mongodb|sql|api|rest|docker|kubernetes/i.test(lower)) {
+    // --- Günlük temel: tarih & saat (Türkiye saatiyle) ---
+    if (/bugun gunlerden|hangi gun|tarihi? (kac|ne)|bugunun tarihi|saat kac|gunlerden ne|tarih nedir|gun bugun|hafta(nin)? gun/.test(norm)) {
+        try {
+            const fmt = new Intl.DateTimeFormat('tr-TR', {
+                timeZone: 'Europe/Istanbul',
+                dateStyle: 'full',
+                timeStyle: 'short'
+            }).format(new Date());
+            return `Türkiye saatiyle şu an: **${fmt}**.\n\nBaşka bir konuda yardımcı olayım mı?`;
+        } catch (_) {
+            return `Bugünün tarihi: ${new Date().toLocaleDateString('tr-TR')}.`;
+        }
+    }
+
+    // --- Kimlik ---
+    if (/(adin|ismin) ne|kimsin|sen kimsin|seni kim|kim yapti|kim gelistir|blogicode nedir/.test(norm)) {
+        return 'Ben **BlogicodeAI Asistan**ıyım — BlogicodeAI teknoloji blog platformunun yapay zeka sohbet asistanı. Güncel teknoloji başlıkları, yazılım, yapay zeka ve inovasyon konularında sohbet eder, sorularını yanıtlarım.\n\nNe öğrenmek istersin?';
+    }
+
+    // --- Teşekkür ---
+    if (/tesekkur|sag ?ol|saol|eyvallah|thanks|tsk|tessekkur/.test(norm)) {
+        return 'Rica ederim! 😊 Başka bir sorun olursa buradayım.';
+    }
+
+    // --- Ne yapabilirsin / yardım ---
+    if (/ne yapabilir|neler yapabilir|yardim|nasil kullan|ne ise yar|ozelliklerin/.test(norm)) {
+        return 'Şunlarda yardımcı olabilirim:\n• 🔥 **Güncel teknoloji trendleri** — yapay zeka, bulut, siber güvenlik, robotik…\n• 💡 **İnovasyon sohbeti** — yeni teknolojiler ve nasıl çalıştıkları\n• 💻 **Yazılım rehberliği** — diller, kavramlar, öğrenme yolu\n• 🗓️ **Günlük temel sorular** — tarih, basit bilgiler\n\nBir örnek yaz, hemen başlayalım!';
+    }
+
+    // --- Güncel trend / gündem ---
+    if (/trend|gundem|guncel|son dakika|populer|sicak|yeni cikan|bugun ne|neler oluyor|haber/.test(norm)) {
+        return 'Teknoloji dünyasında şu an öne çıkan **trend başlıklar**:\n\n• 🤖 **Üretken yapay zeka & AI ajanları** — kod yazan, görev tamamlayan otonom asistanlar.\n• ☁️ **Bulut & sunucusuz mimariler** — maliyet optimizasyonu (FinOps) ve edge computing.\n• 🔐 **Siber güvenlik** — Zero Trust, passkey, AI destekli savunma.\n• 📱 **On-device AI** — telefonda çalışan küçük ve verimli modeller.\n• 🤖 **İnsansı robotlar & otonom sistemler** — sahaya inen pilot projeler.\n• 🥽 **Uzamsal bilişim (AR/VR)** ve kuantum bilişimde ilk adımlar.\n\nHangisini açayım? Bir başlık seç, detaylandırayım.\n\n_(Canlı haber akışı için sunucuya GEMINI_API_KEY + GEMINI_ENABLE_SEARCH=true eklenebilir.)_';
+    }
+
+    // --- Öğrenme / kariyer yol haritası ---
+    if (/nasil basla|nereden basla|ogrenmek|ogrenmeli|kurs|roadmap|yol harita|kariyer|nasil ilerle/.test(norm)) {
+        return 'Yazılıma başlangıç için pratik bir yol haritası:\n1) **Bir dil seç:** Python (veri/otomasyon/AI) ya da JavaScript (web).\n2) **Temelleri öğren:** değişkenler, döngüler, fonksiyonlar, hata ayıklama.\n3) **Küçük proje yap:** yapılacaklar listesi, basit bir blog API\'si.\n4) **Git + GitHub** kullanmayı erken alışkanlık edin.\n5) **Bir alan seç:** web, mobil, veri/AI veya DevOps.\n\nHangi alan ilgini çekiyor? Ona göre daha net bir plan çıkaralım.';
+    }
+
+    // --- Belirli teknoloji/inovasyon başlıkları (ASCII normalize edilmiş girişe göre) ---
+    for (const topic of INNOVATION_TOPICS) {
+        if (topic.rx.test(norm)) return topic.reply;
+    }
+
+    // --- Programlama dilleri / araçlar ---
+    if (/python|javascript|typescript|react|node|java\b|go\b|rust|c\+\+|c#|php|swift|kotlin|flutter|mongodb|\bsql\b|\bapi\b|rest|graphql|git\b/.test(norm)) {
         const topic = lower.includes('python') ? 'Python'
-            : lower.includes('typescript') || /\bts\b/.test(lower) ? 'TypeScript'
+            : (lower.includes('typescript') || /\bts\b/.test(lower)) ? 'TypeScript'
                 : /javascript|react|node/.test(lower) ? 'JavaScript / Node / React'
                     : lower.includes('mongodb') ? 'MongoDB'
-                        : lower.includes('docker') || lower.includes('kubernetes') ? 'Konteyner / DevOps'
+                        : (lower.includes('flutter') || lower.includes('swift') || lower.includes('kotlin')) ? 'Mobil geliştirme'
                             : 'Bu teknoloji';
-        return `${topic} tarafında yardımcı olabilirim. Sorunu veya hedefini biraz aç: öğrenmek mi istiyorsun, hata mı alıyorsun, mimari mi kuruyorsun?\n\nKısa not: Yerel modda genel rehberlik veriyorum; çok uzun kod üretimi için GEMINI_API_KEY ile Gemini açmak en iyisi.`;
+        return `${topic} konusunda yardımcı olabilirim. 👍 Hedefini biraz açar mısın:\n• Yeni mi öğreniyorsun?\n• Bir hata mı alıyorsun?\n• Mimari/tasarım kararı mı veriyorsun?\n\nNe kadar net olursan, o kadar isabetli yönlendirebilirim.`;
     }
 
-    if (/kim|sen kimsin|ne işe yar|blogicode/i.test(lower)) {
-        return 'Ben BlogicodeAI sohbet asistanıyım: teknoloji ve kodlama konularında yönlendirme ve özetle yardımcı olurum. Platformda yazı keşfi, panel ve yorumlar site üzerinden.\n\nŞu an ' + (lastModelText ? 'konuşmaya devam edebiliriz.' : 'yeni bir konu açabilirsin.');
-    }
-
-    const snippet = userText.length > 220 ? `${userText.slice(0, 220)}…` : userText;
-    return `Şunu yazdın: "${snippet}"\n\nBunu şöyle ilerletebiliriz:\n• Daha net bir hedef yaz (ör. "Express'te CORS hatası", "SQL JOIN örneği").\n• İstersen bir önceki cevabıma tepki ver: neyi derinleştirelim?\n• Keşfet sayfasında ilgili yazılara da göz atabilirsin.\n\nTam yapay zeka cevabı için backend .env içine Google AI Studio anahtarını GEMINI_API_KEY olarak ekle; yine de anahtar olmadan bu sohbet ekranı çalışmaya devam eder.`;
+    // --- Genel yedek ---
+    const snippet = trimmed.length > 200 ? `${trimmed.slice(0, 200)}…` : trimmed;
+    return `"${snippet}" — ilginç konu! 🙂 Bunu birlikte açabiliriz.\n\nSohbeti şöyle ilerletebiliriz:\n• Sorunu biraz daha netleştir (ör. "yapay zeka nasıl öğrenilir", "bulut nedir").\n• Güncel başlıklar için "Bugün neler trend?" yazabilirsin.\n• Teknoloji, yazılım veya inovasyon — hangisi olursa konuşalım.\n\nNeyi merak ediyorsun?`;
 }
 
-const DEFAULT_GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-8b'];
+const DEFAULT_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
 
 function parseModelList() {
     const raw = (process.env.GEMINI_MODEL || '').trim();

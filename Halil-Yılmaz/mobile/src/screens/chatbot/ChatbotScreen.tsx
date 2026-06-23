@@ -16,10 +16,10 @@ import { ChatMessage } from '../../types';
 import { Colors } from '../../theme/colors';
 
 const SUGGESTIONS = [
-  'Yapay zeka nedir?',
-  'React Native nasıl öğrenilir?',
-  'Clean Code prensipleri nelerdir?',
-  'Mobil uygulama geliştirme ipuçları',
+  'Bugün teknoloji dünyasında neler trend?',
+  'Üretken yapay zeka (generative AI) nedir?',
+  'Yazılıma nereden başlamalıyım?',
+  'Bugün günlerden ne?',
 ];
 
 export default function ChatbotScreen() {
@@ -32,10 +32,12 @@ export default function ChatbotScreen() {
     const msg = (text ?? input).trim();
     if (!msg || loading) return;
     setInput('');
+    // Geçmişi yeni mesajı eklemeden önce yakala — backend bağlam için kullanır.
+    const history = messages;
     setMessages((prev) => [...prev, { role: 'user', content: msg }]);
     setLoading(true);
     try {
-      const { reply } = await sendMessage(msg);
+      const { reply } = await sendMessage(msg, history);
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch (err: any) {
       setMessages((prev) => [
@@ -46,6 +48,11 @@ export default function ChatbotScreen() {
       setLoading(false);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
+  };
+
+  const handleClear = () => {
+    if (loading) return;
+    setMessages([]);
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
@@ -82,6 +89,17 @@ export default function ChatbotScreen() {
             <Text style={styles.botStatus}>AI destekli • Her zaman burada</Text>
           </View>
         </View>
+        {messages.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearBtn}
+            onPress={handleClear}
+            disabled={loading}
+            activeOpacity={0.7}
+            accessibilityLabel="Sohbeti temizle"
+          >
+            <Ionicons name="trash-outline" size={18} color={Colors.muted} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
@@ -152,12 +170,25 @@ export default function ChatbotScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgPage },
   topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   botInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  clearBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   botIcon: {
     width: 40,
     height: 40,
