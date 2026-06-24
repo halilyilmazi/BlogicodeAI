@@ -10,7 +10,7 @@
 
 ## RabbitMQ/Kafka Kanıt Videosu
 
-> kullanmadım
+> Kullanmadım
 
 ## Redis/Memcached Kanıt Videosu
 
