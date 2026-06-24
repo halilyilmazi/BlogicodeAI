@@ -84,6 +84,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   PostDetail: { postId: string; post?: Post };
   EditProfile: undefined;
+  LikedSaved: { initialTab?: 'liked' | 'saved' } | undefined;
 };
 
 export type MainTabParamList = {

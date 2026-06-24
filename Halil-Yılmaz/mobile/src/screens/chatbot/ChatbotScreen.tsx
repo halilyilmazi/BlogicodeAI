@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { sendMessage } from '../../api/chatbot';
 import { ChatMessage } from '../../types';
@@ -23,6 +24,7 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatbotScreen() {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ export default function ChatbotScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 14 }]}>
         <View style={styles.botInfo}>
           <View style={styles.botIcon}>
             <Ionicons name="sparkles" size={20} color={Colors.primaryLight} />

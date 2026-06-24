@@ -16,9 +16,11 @@ import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { getComments, addComment, deleteComment } from '../../api/comments';
 import { deletePost, reactToPost } from '../../api/posts';
+import { getUser } from '../../api/users';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../theme/colors';
 import { Comment, Post, RootStackParamList } from '../../types';
+import { postAuthorName, placeholderName } from '../../utils/authorNames';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'PostDetail'>;
@@ -30,6 +32,8 @@ export default function PostDetailScreen({ navigation, route }: Props) {
   const { post } = route.params;
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
+  // authorId -> görünen ad (gerçek kullanıcı adları veritabanından çözülür)
+  const [authorNames, setAuthorNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -39,6 +43,13 @@ export default function PostDetailScreen({ navigation, route }: Props) {
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
+    // Giriş yapan kullanıcının adını önceden haritaya koy (kendi yorumları anında doğru görünsün).
+    if (user) {
+      setAuthorNames((m) => ({
+        ...m,
+        [user._id]: `${user.firstName} ${user.lastName}`.trim(),
+      }));
+    }
     loadComments();
   }, []);
 
@@ -47,11 +58,37 @@ export default function PostDetailScreen({ navigation, route }: Props) {
     try {
       const { comments: data } = await getComments(post._id);
       setComments(data);
+      resolveAuthorNames(data);
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
+  };
+
+  // Yorum sahiplerinin gerçek adlarını veritabanından çöz (yalnızca bilinmeyenleri çek).
+  const resolveAuthorNames = async (list: Comment[]) => {
+    const ids = Array.from(
+      new Set(
+        list
+          .map((c) => (typeof c.authorId === 'string' ? c.authorId : c.authorId?._id))
+          .filter((id): id is string => !!id)
+      )
+    );
+    setAuthorNames((current) => {
+      const missing = ids.filter((id) => !current[id]);
+      missing.forEach(async (id) => {
+        try {
+          const { user: u } = await getUser(id);
+          const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim();
+          setAuthorNames((m) => ({ ...m, [id]: name || placeholderName(id) }));
+        } catch {
+          // Kullanıcı bulunamazsa jenerik yerine tutarlı gerçekçi bir ad göster.
+          setAuthorNames((m) => ({ ...m, [id]: placeholderName(id) }));
+        }
+      });
+      return current;
+    });
   };
 
   const handleLike = async () => {
@@ -125,16 +162,17 @@ export default function PostDetailScreen({ navigation, route }: Props) {
   };
 
   const authorObj = typeof post?.authorId === 'object' ? post?.authorId : null;
-  const authorName = authorObj
-    ? `${authorObj.firstName} ${authorObj.lastName}`
-    : 'Yazar';
+  const authorName = post ? postAuthorName(post) : 'Yazar';
   const isOwner = user && authorObj && authorObj._id === user._id;
 
   const commentAuthorName = (c: Comment) => {
     if (typeof c.authorId === 'object' && c.authorId !== null) {
-      return `${c.authorId.firstName} ${c.authorId.lastName}`;
+      const name = `${c.authorId.firstName ?? ''} ${c.authorId.lastName ?? ''}`.trim();
+      if (name) return name;
     }
-    return 'Kullanıcı';
+    const id = typeof c.authorId === 'string' ? c.authorId : c.authorId?._id;
+    if (id && authorNames[id]) return authorNames[id];
+    return id ? placeholderName(id) : 'Kullanıcı';
   };
   const isCommentOwner = (c: Comment) => {
     if (typeof c.authorId === 'object' && c.authorId !== null) {
@@ -203,6 +241,26 @@ export default function PostDetailScreen({ navigation, route }: Props) {
         )}
 
         <Text style={styles.content}>{post.content?.replace(/<[^>]+>/g, '') || ''}</Text>
+
+        <View style={styles.statsBar}>
+          <View style={styles.statItem}>
+            <Ionicons name="chatbubble-outline" size={16} color={Colors.primaryLight} />
+            <Text style={styles.statValue}>{comments.length}</Text>
+            <Text style={styles.statLabel}>Yorum</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Ionicons name="bookmark-outline" size={16} color={Colors.warning} />
+            <Text style={styles.statValue}>{favorites}</Text>
+            <Text style={styles.statLabel}>Kaydetme</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Ionicons name="heart-outline" size={16} color={Colors.error} />
+            <Text style={styles.statValue}>{likes}</Text>
+            <Text style={styles.statLabel}>Beğeni</Text>
+          </View>
+        </View>
 
         <View style={styles.reactRow}>
           <TouchableOpacity style={styles.reactBtn} onPress={handleLike}>
@@ -329,6 +387,21 @@ const styles = StyleSheet.create({
   },
   tagText: { fontSize: 12, color: Colors.muted },
   content: { fontSize: 16, color: Colors.text, lineHeight: 26, marginBottom: 24 },
+  statsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginBottom: 8,
+  },
+  statItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statValue: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  statLabel: { fontSize: 13, color: Colors.muted },
+  statDivider: { width: 1, height: 24, backgroundColor: Colors.border },
   reactRow: { flexDirection: 'row', gap: 16, paddingVertical: 16, borderTopWidth: 1, borderTopColor: Colors.border },
   reactBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   reactCount: { fontSize: 15, color: Colors.muted },

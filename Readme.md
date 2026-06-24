@@ -21,7 +21,7 @@
 ## Proje Linkleri
 
 - **Web Front-end Adresi:** [https://www.blogicodeai.com](https://www.blogicodeai.com)  
-- **REST API Adresi:** [https://blogicode-ai.vercel.app/api](https://blogicodeai-production.up.railway.app/swagger)
+- **REST API Adresi:** [https://blogicode-ai.vercel.app/api](https://blogicode-ai.vercel.app/api)
  
 
 ---

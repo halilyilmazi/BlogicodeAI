@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { updateUser } from '../../api/users';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +22,7 @@ import { RootStackParamList } from '../../types';
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'EditProfile'> };
 
 export default function EditProfileScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { user, updateUser: updateAuthUser } = useAuth();
 
   const [form, setForm] = useState({
@@ -94,7 +96,7 @@ export default function EditProfileScreen({ navigation }: Props) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.navBar}>
+      <View style={[styles.navBar, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={handleDiscard} style={styles.navBtn}>
           <Ionicons name="close" size={22} color={Colors.muted} />
         </TouchableOpacity>

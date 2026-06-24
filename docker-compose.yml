@@ -8,27 +8,28 @@ services:
       - mongo_data:/data/db
     restart: unless-stopped
 
-  api:
-    build:
-      context: ./Blogicode.API
-      dockerfile: Dockerfile
-    container_name: blogicode-api
+  redis:
+    image: redis:7-alpine
+    container_name: blogicode-redis
     ports:
-      - "5000:8080"
-    environment:
-      - MongoDb__ConnectionString=mongodb://mongo:27017
-      - MongoDb__DatabaseName=blogicode
-    depends_on:
-      - mongo
+      - "6379:6379"
     restart: unless-stopped
 
-  mobile:
+  # REST API + statik web arayüzü (mobil uygulamanın ve web'in kullandığı gerçek backend)
+  api:
     build:
-      context: ./Halil-Yılmaz/mobile
-      dockerfile: Dockerfile
-    container_name: blogicode-mobile
+      context: ./Halil-Yılmaz
+      dockerfile: backend/Dockerfile
+    container_name: blogicode-api
     ports:
-      - "19006:80"
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/blogicode
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mongo
+      - redis
     restart: unless-stopped
 
 volumes:

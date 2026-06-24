@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,13 @@ import {
   TextInput,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getPosts } from '../../api/posts';
 import { Post, RootStackParamList } from '../../types';
 import { Colors } from '../../theme/colors';
+import { postAuthorName } from '../../utils/authorNames';
+import { SAMPLE_POSTS } from '../../data/samplePosts';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
@@ -38,6 +41,9 @@ const SORTS: { key: 'recent' | 'popular' | 'oldest'; label: string }[] = [
 ];
 
 export default function HomeScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const listRef = useRef<FlatList<Post>>(null);
+  const lastTabPress = useRef(0);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,36 +52,74 @@ export default function HomeScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
 
-  const fetchPosts = useCallback(async () => {
-    setError('');
-    try {
-      const params: any = { sort };
-      if (category.topic) params.topic = category.topic;
-      if (search.trim()) params.q = search.trim();
-      const { posts: data } = await getPosts(params);
-      setPosts(data);
-    } catch (err: any) {
-      setError(err.message || 'Yazılar yüklenemedi');
+  // Fisher–Yates karıştırma — her yenilemede farklı öneriler üste gelsin.
+  const shuffle = (arr: Post[]) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
-  }, [sort, category, search]);
+    return a;
+  };
+
+  // Backend boş/erişilemez olduğunda örnek yazıları seçili kategori ve aramaya göre süz.
+  const filteredSamples = useCallback(() => {
+    const q = search.trim().toLowerCase();
+    return SAMPLE_POSTS.filter((p) => {
+      const catOk = !category.label || category.label === 'Tümü' || p.category === category.label;
+      if (!catOk) return false;
+      if (!q) return true;
+      const hay = `${p.title} ${p.content} ${(p.tags ?? []).join(' ')}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [category, search]);
+
+  const fetchPosts = useCallback(
+    async (opts?: { shuffle?: boolean }) => {
+      setError('');
+      try {
+        const params: any = { sort };
+        if (category.topic) params.topic = category.topic;
+        if (search.trim()) params.q = search.trim();
+        const { posts: data } = await getPosts(params);
+        // Backend hiç yazı dönmediyse akış boş kalmasın: örnek yazıları göster.
+        const result = data && data.length ? data : filteredSamples();
+        setPosts(opts?.shuffle ? shuffle(result) : result);
+      } catch (err: any) {
+        // Backend erişilemiyor: akışı boş bırakma, örnek yazılara düş.
+        const fallback = filteredSamples();
+        setPosts(opts?.shuffle ? shuffle(fallback) : fallback);
+      }
+    },
+    [sort, category, search, filteredSamples]
+  );
 
   useEffect(() => {
     setLoading(true);
     fetchPosts().finally(() => setLoading(false));
   }, [fetchPosts]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchPosts();
+    // Yenilemede farklı/yeni öneriler getir.
+    await fetchPosts({ shuffle: true });
     setRefreshing(false);
-  };
+  }, [fetchPosts]);
 
-  const authorName = (post: Post) => {
-    if (typeof post.authorId === 'object' && post.authorId !== null) {
-      return `${post.authorId.firstName} ${post.authorId.lastName}`;
-    }
-    return 'Yazar';
-  };
+  // Keşfet sekmesi ikonuna 300ms içinde iki kez basılırsa listeyi başa al ve yenile.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      const now = Date.now();
+      if (now - lastTabPress.current < 300) {
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+        onRefresh();
+      }
+      lastTabPress.current = now;
+    });
+    return unsubscribe;
+  }, [navigation, onRefresh]);
+
+  const authorName = (post: Post) => postAuthorName(post);
 
   const renderPost = ({ item }: { item: Post }) => (
     <TouchableOpacity
@@ -116,7 +160,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.appName}>BlogicodeAI</Text>
       </View>
 
@@ -138,12 +182,21 @@ export default function HomeScreen({ navigation }: Props) {
       </View>
 
       <FlatList
+        ref={listRef}
         data={posts}
         keyExtractor={(item) => item._id}
         renderItem={renderPost}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.white}
+            colors={[Colors.white]}
+            progressBackgroundColor={Colors.bgCard}
+          />
+        }
         ListHeaderComponent={
           <View>
             <FlatList
@@ -184,7 +237,7 @@ export default function HomeScreen({ navigation }: Props) {
         }
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator color={Colors.primary} style={{ marginTop: 60 }} />
+            <ActivityIndicator color={Colors.white} style={{ marginTop: 60 }} />
           ) : error ? (
             <View style={styles.emptyState}>
               <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />

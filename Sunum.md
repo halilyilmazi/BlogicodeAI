@@ -10,11 +10,13 @@
 
 ## RabbitMQ/Kafka Kanıt Videosu
 
-> **Video Linki:** [RabbitMQ/Kafka videosu linki buraya eklenecek](https://example.com)
+> kullanmadım
 
 ## Redis/Memcached Kanıt Videosu
 
-> **Video Linki:** [Redis/Memcached videosu linki buraya eklenecek](https://example.com)
+> Redis, REST API'de `GET /api/posts` yanıtlarını önbelleğe almak için kullanılmaktadır (önbellek TTL 60 sn, yazı/yorum değişiminde otomatik geçersizleştirme).
+>
+> **Video Linki:** [Redis kanıt videosu linki buraya eklenecek](https://example.com)
 
 ## Sunum Videosu (Cep Telefonunda Gösterilmeli, Tüm ekip bir arada)
 
@@ -83,19 +85,6 @@ Her ekip üyesi için aşağıdaki yapı takip edilecektir:
 
 ---
 
-#### Veli Yılmaz
-**Kişisel Tanıtım:**
-- İsim: Halil Yılmaz
-- Rol: [Rol belirtilecek]
-
-**Gereksinimler:**
-- [Gereksinim 1]
-- [Gereksinim 2]
-- [Gereksinim 3]
-- [Gereksinim 4]
-
----
-
 ### 4. Grup Lideri - Kapanış Konuşması (1 dakika)
 
 **Konuşma İçeriği:**
@@ -156,4 +145,4 @@ Her ekip üyesi için aşağıdaki yapı takip edilecektir:
   - Gereksinim sunumu: 3.5-5 dakika
     - Her gereksinim için: yaklaşık 1-1.5 dakika
 - **Grup Lideri Kapanış:** 1-2 dakika
-- **Toplam Süre:** Yaklaşık 30-40 dakika (5 kişilik ekip için)
+- **Toplam Süre:** Yaklaşık 8-10 dakika (1 kişilik ekip için)

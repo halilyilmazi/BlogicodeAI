@@ -17,8 +17,10 @@ const indexHtmlPath = path.join(frontendDir, 'index.html');
 // NOT: process.exit(1) kullanma — Vercel'de URI yoksa tüm route'lar yüklenmeden süreç ölür, /api/health bile çalışmaz.
 const mongoURI = process.env.MONGODB_URI;
 if (mongoURI) {
-    mongoose.connect("mongodb+srv://ylmzyzlm:iHy.4090@cluster0.yzs8d09.mongodb.net/blogicode?appName=Cluster0")
-        .then(() => console.log("Harika! MongoDB Atlas'a başarıyla bağlanıldı."))
+    // Bağlantı dizisi ortam değişkeninden gelir: yerelde/Docker'da mongodb://mongo:27017/blogicode,
+    // canlıda (Vercel) MongoDB Atlas. Sabit (hardcoded) bağlantı dizisi kullanılmaz.
+    mongoose.connect(mongoURI)
+        .then(() => console.log("Harika! MongoDB'ye başarıyla bağlanıldı."))
         .catch((err) => console.log("Veritabanı bağlantı hatası:", err));
 } else {
     if (process.env.VERCEL) {
@@ -31,6 +33,28 @@ if (mongoURI) {
         process.exit(1);
     }
 }
+
+// --- REDIS (opsiyonel önbellek): GET /api/posts yanıtlarını önbelleğe alır ---
+// REDIS_URL tanımlıysa bağlanır (Docker'da redis://redis:6379). Tanımlı değilse veya
+// bağlantı kurulamazsa önbellek sessizce devre dışı kalır; uygulama normal çalışmaya devam eder.
+let redisClient = null;
+let postsCacheVersion = 1; // Yazı/yorum değişikliğinde artar -> eski önbellek anahtarları geçersizleşir
+const POSTS_CACHE_TTL = 60; // saniye
+const REDIS_URL = process.env.REDIS_URL;
+if (REDIS_URL) {
+    try {
+        const { createClient } = require('redis');
+        redisClient = createClient({ url: REDIS_URL });
+        redisClient.on('error', (e) => console.warn('[Redis] hata:', e.message));
+        redisClient.connect()
+            .then(() => console.log('[Redis] bağlandı:', REDIS_URL))
+            .catch((e) => { console.warn('[Redis] bağlanılamadı, önbellek devre dışı:', e.message); redisClient = null; });
+    } catch (e) {
+        console.warn('[Redis] modül yüklenemedi, önbellek devre dışı:', e.message);
+        redisClient = null;
+    }
+}
+function invalidatePostsCache() { postsCacheVersion++; }
 
 // --- VERİTABANI ŞEMALARI (Modeller) ---
 const User = mongoose.model('User', new mongoose.Schema({
@@ -102,6 +126,18 @@ app.use((req, res, next) => {
         });
     }
     return next();
+});
+
+// Yazı/yorum değiştiren başarılı istekler sonrası GET /api/posts önbelleğini geçersiz kıl.
+app.use((req, res, next) => {
+    const mutating = ['POST', 'PUT', 'DELETE'].includes(req.method);
+    const affectsPosts = req.path.startsWith('/api/posts') || req.path.startsWith('/api/comments');
+    if (mutating && affectsPosts) {
+        res.on('finish', () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) invalidatePostsCache();
+        });
+    }
+    next();
 });
 
 // --- 11 GEREKSİNİM İÇİN API ROTALARI ---
@@ -306,6 +342,22 @@ app.get('/api/posts', async (req, res) => {
             sortObj = { createdAt: -1 };
         }
 
+        // --- REDIS ÖNBELLEK: aynı sorgu için DB'ye gitmeden yanıt döndür ---
+        const cacheKey = `posts:v${postsCacheVersion}:${sortParam}|${topic}|${q}`;
+        if (redisClient && redisClient.isReady) {
+            try {
+                const cached = await redisClient.get(cacheKey);
+                if (cached) {
+                    console.log('[Redis] CACHE HIT  ->', cacheKey);
+                    res.set('X-Cache', 'HIT');
+                    return res.status(200).json({ data: JSON.parse(cached) });
+                }
+                console.log('[Redis] CACHE MISS ->', cacheKey);
+            } catch (e) {
+                console.warn('[Redis] okuma hatası:', e.message);
+            }
+        }
+
         const pipeline = [
             ...(Object.keys(matchStage).length ? [{ $match: matchStage }] : []),
             {
@@ -337,6 +389,15 @@ app.get('/api/posts', async (req, res) => {
         ];
 
         const posts = await Post.aggregate(pipeline);
+
+        if (redisClient && redisClient.isReady) {
+            try {
+                await redisClient.setEx(cacheKey, POSTS_CACHE_TTL, JSON.stringify(posts));
+            } catch (e) {
+                console.warn('[Redis] yazma hatası:', e.message);
+            }
+        }
+        res.set('X-Cache', 'MISS');
         res.status(200).json({ data: posts });
     } catch (error) {
         res.status(500).json({ error: error.message });

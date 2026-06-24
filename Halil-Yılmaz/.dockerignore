@@ -1,0 +1,9 @@
+# Docker build context'inden hariç tutulanlar (api imajı için)
+mobile
+**/node_modules
+**/dist
+**/.expo
+**/.env
+**/*.log
+.git
+.DS_Store

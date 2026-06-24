@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../context/AuthContext';
@@ -17,11 +18,13 @@ import CreatePostScreen from '../screens/posts/CreatePostScreen';
 import ChatbotScreen from '../screens/chatbot/ChatbotScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import LikedSavedScreen from '../screens/profile/LikedSavedScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -40,8 +43,8 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: Colors.bgCard,
           borderTopColor: Colors.border,
-          paddingBottom: 6,
-          height: 60,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
+          height: 60 + insets.bottom,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
         headerShown: false,
@@ -88,6 +91,11 @@ export default function AppNavigator() {
               name="EditProfile"
               component={EditProfileScreen}
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="LikedSaved"
+              component={LikedSavedScreen}
+              options={{ title: 'Beğeniler & Kaydedilenler', headerBackTitle: 'Geri' }}
             />
           </>
         ) : (

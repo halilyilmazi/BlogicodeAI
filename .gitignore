@@ -1,7 +1,10 @@
 .DS_Store
 
-# Blogicode.API — Atlas URI / şifre (sadece bu dosyayı düzenle, Git'e gitmesin)
-Blogicode.API/appsettings.Development.json
+# Bağımlılıklar
+node_modules/
+
+# Ortam değişkenleri (gizli)
+.env
 
 # Claude Code yerel ayarları (repoya gerek yok)
 .claude/

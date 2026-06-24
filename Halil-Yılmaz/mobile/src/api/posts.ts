@@ -17,6 +17,12 @@ export const createPost = (payload: CreatePostPayload): Promise<Post> =>
 export const deletePost = (id: string, authorId: string): Promise<void> =>
   client.delete(`/posts/${id}`, { params: { authorId } }).then((r) => r.data);
 
+export const getLikedPosts = (userId: string): Promise<{ posts: Post[] }> =>
+  client.get(`/users/${userId}/likes`).then((r) => ({ posts: r.data.data ?? r.data.posts ?? [] }));
+
+export const getFavoritePosts = (userId: string): Promise<{ posts: Post[] }> =>
+  client.get(`/users/${userId}/favorites`).then((r) => ({ posts: r.data.data ?? r.data.posts ?? [] }));
+
 export const reactToPost = (
   id: string,
   userId: string,

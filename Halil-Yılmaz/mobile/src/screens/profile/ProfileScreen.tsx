@@ -10,16 +10,19 @@ import {
   RefreshControl,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getUser, deleteUser } from '../../api/users';
 import { deletePost } from '../../api/posts';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../theme/colors';
 import { Post, RootStackParamList } from '../../types';
+import { getLocalPostsByAuthor, removeLocalPost, mergePostsById } from '../../utils/localPosts';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList> };
 
 export default function ProfileScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,17 +32,28 @@ export default function ProfileScreen({ navigation }: Props) {
   const loadProfile = useCallback(async () => {
     if (!user) return;
     setError('');
+    // Yerelde saklanan kendi yazıları (backend erişilemese de görünsün).
+    const local = await getLocalPostsByAuthor(user._id);
     try {
       const data = await getUser(user._id);
-      setPosts(data.posts ?? []);
+      // Backend yazıları öncelikli; yerel-yalnız yazılar da eklenir (tekilleştirilmiş).
+      setPosts(mergePostsById(data.posts ?? [], local));
     } catch (err: any) {
-      setError(err.message || 'Profil yüklenemedi');
+      // Backend erişilemiyor: en azından yerel yazıları göster.
+      setPosts(local);
+      if (local.length === 0) setError(err.message || 'Profil yüklenemedi');
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  // Sekmeye her dönüldüğünde yenile — yeni yazılan yazılar anında görünsün.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => { loadProfile(); });
+    return unsubscribe;
+  }, [navigation, loadProfile]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -102,10 +116,11 @@ export default function ProfileScreen({ navigation }: Props) {
         onPress: async () => {
           try {
             await deletePost(postId, user._id);
-            setPosts((p) => p.filter((x) => x._id !== postId));
-          } catch (err: any) {
-            Alert.alert('Hata', err.message);
+          } catch {
+            // Backend erişilemese de yerel kopyayı ve listeyi güncellemeye devam et.
           }
+          await removeLocalPost(postId);
+          setPosts((p) => p.filter((x) => x._id !== postId));
         },
       },
     ]);
@@ -121,9 +136,9 @@ export default function ProfileScreen({ navigation }: Props) {
       style={styles.container}
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.white} colors={[Colors.white]} />}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
@@ -167,6 +182,27 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
       </View>
 
+      <View style={styles.quickLinks}>
+        <TouchableOpacity
+          style={styles.quickLink}
+          onPress={() => navigation.navigate('LikedSaved', { initialTab: 'liked' })}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="heart" size={20} color={Colors.error} />
+          <Text style={styles.quickLinkText}>Beğendiklerim</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.muted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.quickLink}
+          onPress={() => navigation.navigate('LikedSaved', { initialTab: 'saved' })}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="bookmark" size={20} color={Colors.warning} />
+          <Text style={styles.quickLinkText}>Kaydettiklerim</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.muted} />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.postsSection}>
         <Text style={styles.sectionTitle}>Yazılarım ({posts.length})</Text>
 
@@ -183,7 +219,7 @@ export default function ProfileScreen({ navigation }: Props) {
         ) : posts.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="document-text-outline" size={40} color={Colors.muted} />
-            <Text style={styles.emptyText}>Henüz yazı yayınlamadınız</Text>
+            <Text style={styles.emptyText}>Henüz bir şey yazmadınız</Text>
           </View>
         ) : (
           posts.map((post) => (
@@ -270,6 +306,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: Colors.bgCard,
   },
+  quickLinks: { paddingHorizontal: 20, paddingTop: 16, gap: 10 },
+  quickLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  quickLinkText: { flex: 1, fontSize: 15, fontWeight: '600', color: Colors.text },
   postsSection: { padding: 20 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 14 },
   postCard: {
