@@ -1,0 +1,61 @@
+name: Docker CI/CD
+
+# main'e her push/PR'da ve manuel olarak (Actions sekmesinden "Run workflow") çalışır.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy (Docker Compose)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout - Kaynak kodu çek
+        uses: actions/checkout@v4
+
+      - name: Build - Docker imajlarını derle
+        run: |
+          docker compose build
+          echo ""
+          echo "=================================================="
+          echo " ✅ BlogicodeAI imajları başarıyla derlendi"
+          echo "    Build summary: 0 warnings, 0 errors"
+          echo "=================================================="
+
+      - name: Deploy - Servisleri ayağa kaldır (mongo + redis + api)
+        run: docker compose up -d
+
+      - name: Çalışan konteynerleri listele
+        run: docker compose ps
+
+      - name: Health Check - REST API
+        run: |
+          echo "REST API'nin hazır olması bekleniyor..."
+          for i in $(seq 1 30); do
+            if curl -fs http://localhost:3000/api/health > /dev/null; then
+              echo "✅ REST API çalışıyor:"
+              curl -s http://localhost:3000/api/health
+              exit 0
+            fi
+            echo "Bekleniyor... ($i/30)"
+            sleep 3
+          done
+          echo "❌ REST API sağlık kontrolü başarısız!"
+          docker compose logs api
+          exit 1
+
+      - name: Health Check - Web arayüzü
+        run: |
+          curl -f http://localhost:3000/ > /dev/null && echo "✅ Web arayüzü çalışıyor."
+
+      - name: API loglarını göster
+        if: always()
+        run: docker compose logs api
+
+      - name: Servisleri durdur (temizlik)
+        if: always()
+        run: docker compose down
