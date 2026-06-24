@@ -16,7 +16,7 @@
 
 > Redis, REST API'de `GET /api/posts` yanıtlarını önbelleğe almak için kullanılmaktadır (önbellek TTL 60 sn, yazı/yorum değişiminde otomatik geçersizleştirme).
 >
-> **Video Linki:** [Redis kanıt videosu linki buraya eklenecek](https://example.com)
+> **Video Linki:** [[Redis kanıt videosu linki buraya eklenecek](https://www.youtube.com/watch?v=vgSvTXt2gFE)]
 
 ## Sunum Videosu (Cep Telefonunda Gösterilmeli, Tüm ekip bir arada)
 
