@@ -2,3 +2,6 @@
 
 # Blogicode.API — Atlas URI / şifre (sadece bu dosyayı düzenle, Git'e gitmesin)
 Blogicode.API/appsettings.Development.json
+
+# Claude Code yerel ayarları (repoya gerek yok)
+.claude/
