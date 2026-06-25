@@ -2,7 +2,7 @@
 
 ## Sunum Videosu
 
- **Video Linki:** [https://youtu.be/GPNGHeMwLbo](https://youtu.be/GPNGHeMwLbo)
+ **Video Linki:** [https://www.youtube.com/watch?v=30z2VfbiqRs](https://www.youtube.com/watch?v=30z2VfbiqRs)
 
  ## CI-CD ve Docker Kanıt Videosu
 
