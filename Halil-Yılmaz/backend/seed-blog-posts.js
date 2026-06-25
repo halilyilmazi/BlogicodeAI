@@ -149,7 +149,9 @@ const SAMPLE_POSTS = [
 ];
 
 async function run() {
-    await mongoose.connect("mongodb+srv://ylmzyzlm:iHy.4090@cluster0.yzs8d09.mongodb.net/blogicode?appName=Cluster0");
+    // Bağlantı dizisi ortam değişkeninden gelir (yerelde mongodb://localhost:27017/blogicode,
+    // Docker'da mongodb://mongo:27017/blogicode). Sabit/gömülü bağlantı dizisi kullanılmaz.
+    await mongoose.connect(mongoURI);
     const existing = await Post.countDocuments({ tags: SEED_TAG });
     if (existing >= SAMPLE_POSTS.length) {
         console.log('Seed yazılar zaten mevcut (' + existing + ' adet).');

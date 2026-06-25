@@ -9,7 +9,9 @@ export const addComment = (
   authorId: string,
   content: string
 ): Promise<Comment> =>
-  client.post(`/posts/${postId}/comments`, { authorId, content }).then((r) => r.data);
+  // Backend { message, comment } döndürür; ekrana eklemek için gerçek yorumu çıkar.
+  // Böylece yeni yorum ilk seferde doğru tarih (createdAt) ve _id ile gelir.
+  client.post(`/posts/${postId}/comments`, { authorId, content }).then((r) => r.data.comment ?? r.data);
 
 export const deleteComment = (commentId: string, authorId: string): Promise<void> =>
   client.delete(`/comments/${commentId}`, { params: { authorId } }).then((r) => r.data);
