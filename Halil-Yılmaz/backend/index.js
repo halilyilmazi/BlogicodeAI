@@ -301,7 +301,12 @@ app.post('/api/auth/register', async (req, res) => {
         if (userExists) return res.status(409).json({ message: "Bu email adresi zaten kullanımda." });
 
         const newUser = await User.create({ firstName: fn, lastName: ln, email: em, password: pw });
-        res.status(201).json({ message: "Kullanıcı başarıyla oluşturuldu", user: userToPublic(newUser) });
+        // Kayıttan sonra otomatik giriş için token döndür (login ile aynı sözleşme).
+        res.status(201).json({
+            message: "Kullanıcı başarıyla oluşturuldu",
+            token: "blogicodeai-jwt-token-777",
+            user: userToPublic(newUser)
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
