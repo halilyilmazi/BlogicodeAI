@@ -15,6 +15,22 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  # Web tabanlı MongoDB paneli — sunum/kanıt videosunda kaydın veritabanına
+  # düştüğü tarayıcıdan (http://localhost:8081) canlı gösterilir.
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: blogicode-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
   # REST API + statik web arayüzü (mobil uygulamanın ve web'in kullandığı gerçek backend)
   api:
     build:

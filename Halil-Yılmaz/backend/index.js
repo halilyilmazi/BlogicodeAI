@@ -10,6 +10,145 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// =====================================================================
+//  CANLI İSTEK PANELİ (/canli) — Sunum/kanıt videosu için
+//  Mobil uygulamadan gelen her REST isteğini ve karşılığında yapılan
+//  veritabanı işlemini tarayıcıda gerçek zamanlı gösterir (SSE).
+//  Akış: Mobil --> REST API (/api/...) --> MongoDB işlemi --> yanıt
+// =====================================================================
+const liveEvents = [];           // son istekler (panel sonradan açılırsa geçmiş görünür)
+const LIVE_MAX = 60;
+const liveClients = new Set();   // bağlı SSE istemcileri
+
+function liveBroadcast(event) {
+    liveEvents.push(event);
+    if (liveEvents.length > LIVE_MAX) liveEvents.shift();
+    const payload = `data: ${JSON.stringify(event)}\n\n`;
+    for (const res of liveClients) {
+        try { res.write(payload); } catch (_) { /* kopan istemci */ }
+    }
+}
+
+// Yanıt gövdesinden DB işleminin sonucunu (kayıt id'si / kayıt sayısı) çıkar
+function liveResultSummary(method, payload) {
+    if (payload == null || typeof payload !== 'object') return '';
+    const body = payload.data != null ? payload.data : payload;
+    if (Array.isArray(body)) return `${body.length} kayıt döndü`;
+    if (body._id) {
+        const id = String(body._id);
+        if (method === 'POST') return `✓ kaydedildi (id: ${id.slice(-6)})`;
+        if (method === 'PUT' || method === 'PATCH') return `✓ güncellendi (id: ${id.slice(-6)})`;
+        return `id: ${id.slice(-6)}`;
+    }
+    if (method === 'DELETE') return '✓ silindi';
+    if (typeof payload.message === 'string') return payload.message.slice(0, 60);
+    return '';
+}
+
+const DB_OP = { GET: 'find', POST: 'insert', PUT: 'update', PATCH: 'update', DELETE: 'delete' };
+
+// Sadece REST API (/api/...) isteklerini izle; statik dosya/panel trafiğini gösterme.
+app.use((req, res, next) => {
+    if (!req.path.startsWith('/api')) return next();
+    const start = Date.now();
+    const segments = req.path.split('/').filter(Boolean); // ['api','posts',...]
+    const collection = segments[1] || '';
+    const origJson = res.json.bind(res);
+    res.json = (payload) => { res.locals.__livePayload = payload; return origJson(payload); };
+    res.on('finish', () => {
+        const ok = res.statusCode >= 200 && res.statusCode < 300;
+        liveBroadcast({
+            time: new Date().toLocaleTimeString('tr-TR'),
+            method: req.method,
+            path: req.originalUrl,
+            collection,
+            dbOp: ok ? `MongoDB ${DB_OP[req.method] || req.method} (${collection})` : '— (işlem yapılmadı)',
+            result: ok ? liveResultSummary(req.method, res.locals.__livePayload) : '',
+            status: res.statusCode,
+            ok,
+            durationMs: Date.now() - start,
+            cache: res.getHeader('X-Cache') || ''
+        });
+    });
+    next();
+});
+
+// SSE akışı: panel buraya bağlanır, her yeni istek anında push edilir.
+app.get('/canli/stream', (req, res) => {
+    res.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive'
+    });
+    res.flushHeaders && res.flushHeaders();
+    res.write('retry: 3000\n\n');
+    for (const ev of liveEvents) res.write(`data: ${JSON.stringify(ev)}\n\n`); // geçmişi gönder
+    liveClients.add(res);
+    const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch (_) {} }, 25000);
+    req.on('close', () => { clearInterval(ping); liveClients.delete(res); });
+});
+
+// Canlı panel sayfası
+app.get('/canli', (req, res) => {
+    res.type('html').send(`<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlogicodeAI — Canlı API & Veritabanı Paneli</title>
+<style>
+  :root{ --bg:#0b1020; --card:#121a30; --line:#22304f; --txt:#e6ecff; --mut:#8aa0c8; --grn:#2ecc71; --red:#ff5d5d; --blu:#4d8dff; }
+  *{box-sizing:border-box} body{margin:0;font:15px/1.45 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px}
+  header h1{font-size:18px;margin:0} header .flow{color:var(--mut);font-size:13px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--grn);box-shadow:0 0 10px var(--grn);animation:p 1.4s infinite}
+  @keyframes p{50%{opacity:.35}}
+  .wrap{padding:18px 24px;max-width:1100px;margin:0 auto}
+  .row{display:grid;grid-template-columns:92px 78px 1fr 1fr 130px;gap:12px;align-items:center;
+       padding:12px 14px;border:1px solid var(--line);background:var(--card);border-radius:10px;margin-bottom:10px;
+       animation:in .35s ease}
+  @keyframes in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .time{color:var(--mut);font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:3px 9px;border-radius:6px;font-weight:700;font-size:12px;text-align:center}
+  .m-GET{background:#13314f;color:#7fb3ff}.m-POST{background:#15402a;color:#5be59a}
+  .m-PUT,.m-PATCH{background:#3d3413;color:#ffd86b}.m-DELETE{background:#451720;color:#ff8d8d}
+  .path{font-family:ui-monospace,Menlo,monospace;color:#cfe0ff;word-break:break-all}
+  .db{color:var(--mut)} .db b{color:#bfe9ff;font-weight:600} .res{color:var(--grn);font-size:13px}
+  .right{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+  .st{font-weight:700} .ok{color:var(--grn)} .er{color:var(--red)}
+  .dur{color:var(--mut);font-size:12px} .cache{background:#3a2a55;color:#d3b3ff;font-size:11px;padding:2px 7px;border-radius:5px}
+  .empty{color:var(--mut);text-align:center;padding:60px 0}
+  .arrow{color:var(--blu)}
+</style></head>
+<body>
+<header>
+  <span class="dot"></span>
+  <h1>BlogicodeAI — Canlı API &amp; Veritabanı Paneli</h1>
+  <span class="flow">Mobil Uygulama <span class="arrow">→</span> REST API <span class="arrow">→</span> MongoDB</span>
+</header>
+<div class="wrap"><div id="list"><div class="empty" id="empty">Mobil uygulamadan bir işlem yapın (yazı ekle, beğen, sil…) — istek burada anında görünecek.</div></div></div>
+<script>
+  const list = document.getElementById('list');
+  const empty = document.getElementById('empty');
+  const es = new EventSource('/canli/stream');
+  es.onmessage = (e) => {
+    const ev = JSON.parse(e.data);
+    if (empty) empty.remove();
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML =
+      '<span class="time">'+ev.time+'</span>'+
+      '<span class="badge m-'+ev.method+'">'+ev.method+'</span>'+
+      '<span class="path">'+ev.path+'</span>'+
+      '<span class="db"><b>'+ev.dbOp+'</b>'+(ev.result?'<br><span class="res">'+ev.result+'</span>':'')+'</span>'+
+      '<span class="right">'+(ev.cache?'<span class="cache">Redis '+ev.cache+'</span>':'')+
+        '<span class="st '+(ev.ok?'ok':'er')+'">'+ev.status+'</span>'+
+        '<span class="dur">'+ev.durationMs+'ms</span></span>';
+    list.prepend(row);
+  };
+</script>
+</body></html>`);
+});
+// ===================== /CANLI İSTEK PANELİ SONU ======================
+
 const frontendDir = path.resolve(__dirname, '..', 'frontend');
 const indexHtmlPath = path.join(frontendDir, 'index.html');
 
@@ -353,6 +492,7 @@ app.get('/api/posts', async (req, res) => {
                     return res.status(200).json({ data: JSON.parse(cached) });
                 }
                 console.log('[Redis] CACHE MISS ->', cacheKey);
+                res.set('X-Cache', 'MISS');
             } catch (e) {
                 console.warn('[Redis] okuma hatası:', e.message);
             }
